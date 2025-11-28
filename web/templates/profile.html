@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Apawtment</title>
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+
+<body class="pattern-bg">
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="nav-group">
+            <span class="logo">Apawtment</span>
+            <a href="profile.html">Profile</a>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="profile-wrapper">
+
+        <!-- USER PROFILE CARD -->
+        <section class="profile-card">
+            <div class="profile-header">
+                <img src="../images/login.png" class="profile-avatar" alt="user avatar">
+                <h2 class="profile-name">Welcome Back!</h2>
+            </div>
+
+            <div class="profile-info">
+                <div class="info-row">
+                    <span class="info-label">Username:</span>
+                    <span class="info-value">user123</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">user@example.com</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Member Since:</span>
+                    <span class="info-value">November 2025</span>
+                </div>
+            </div>
+
+            <div class="profile-actions">
+                <button class="profile-btn" onclick="window.location.href='edit-profile.html'">Edit Profile</button>
+                <button class="profile-btn secondary" onclick="window.location.href='index.html'">Logout</button>
+            </div>
+        </section>
+
+        <!-- MY PET LIST -->
+        <section class="quick-links-card">
+            <h3>My Pet List</h3>
+
+            <!-- Pet Cards -->
+            <div class="pet-list" id="petList">
+                <div class="pet-mini-card" data-pet="cat"
+                    onclick="if(!deleteModeActive) window.location.href='catpet.html'">
+                    <img src="../images/cat.webp" class="pet-mini-photo" alt="PiPi">
+                    <div class="pet-mini-info">
+                        <h4 class="pet-mini-name">PiPi</h4>
+                        <p class="pet-mini-details">Cat • 1 year old</p>
+                    </div>
+                    <span class="delete-icon" onclick="event.stopPropagation(); deletePet(this, 'PiPi')">❌</span>
+                </div>
+
+                <div class="pet-mini-card" data-pet="dog"
+                    onclick="if(!deleteModeActive) window.location.href='dogpet.html'">
+                    <img src="../images/dog.jpg" class="pet-mini-photo" alt="Max">
+                    <div class="pet-mini-info">
+                        <h4 class="pet-mini-name">Max</h4>
+                        <p class="pet-mini-details">Dog • 3 years old</p>
+                    </div>
+                    <span class="delete-icon" onclick="event.stopPropagation(); deletePet(this, 'Max')">❌</span>
+                </div>
+
+                <div class="pet-mini-card" data-pet="rabbit"
+                    onclick="if(!deleteModeActive) window.location.href='rabbitpet.html'">
+                    <img src="../images/rabbit.jpg" class="pet-mini-photo" alt="Fluffy">
+                    <div class="pet-mini-info">
+                        <h4 class="pet-mini-name">Fluffy</h4>
+                        <p class="pet-mini-details">Rabbit • 2 years old</p>
+                    </div>
+                    <span class="delete-icon" onclick="event.stopPropagation(); deletePet(this, 'Fluffy')">❌</span>
+                </div>
+
+                <div class="pet-mini-card" data-pet="hamster"
+                    onclick="if(!deleteModeActive) window.location.href='hamsterpet.html'">
+                    <img src="../images/hamster.jpg" class="pet-mini-photo" alt="Peanut">
+                    <div class="pet-mini-info">
+                        <h4 class="pet-mini-name">Peanut</h4>
+                        <p class="pet-mini-details">Hamster • 1 year old</p>
+                    </div>
+                    <span class="delete-icon" onclick="event.stopPropagation(); deletePet(this, 'Peanut')">❌</span>
+                </div>
+
+                <div class="pet-mini-card" data-pet="bird"
+                    onclick="if(!deleteModeActive) window.location.href='birdpet.html'">
+                    <img src="../images/bird.jpg" class="pet-mini-photo" alt="Tweety">
+                    <div class="pet-mini-info">
+                        <h4 class="pet-mini-name">Tweety</h4>
+                        <p class="pet-mini-details">Bird • 2 years old</p>
+                    </div>
+                    <span class="delete-icon" onclick="event.stopPropagation(); deletePet(this, 'Tweety')">❌</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pet-list-actions">
+                <button class="pet-action-btn add-btn" onclick="window.location.href='addPet.html'">
+                    <span>➕</span> Add Pet
+                </button>
+                <button class="pet-action-btn delete-btn" id="deleteBtn" onclick="toggleDeleteMode()">
+                    <span>🗑️</span> Delete Pet
+                </button>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        let deleteModeActive = false;
+
+        function toggleDeleteMode() {
+            deleteModeActive = !deleteModeActive;
+            const petCards = document.querySelectorAll('.pet-mini-card');
+            const deleteBtn = document.getElementById('deleteBtn');
+
+            if (deleteModeActive) {
+                petCards.forEach(card => {
+                    card.classList.add('delete-mode');
+                });
+                deleteBtn.innerHTML = '<span>✓</span> Done';
+                deleteBtn.style.background = '#c08a1a';
+            } else {
+                petCards.forEach(card => {
+                    card.classList.remove('delete-mode');
+                });
+                deleteBtn.innerHTML = '<span>🗑️</span> Delete Pet';
+                deleteBtn.style.background = '#f5c0c0';
+            }
+        }
+
+        function deletePet(element, petName) {
+            if (!deleteModeActive) return;
+
+            if (confirm(`Are you sure you want to delete ${petName}?`)) {
+                const card = element.closest('.pet-mini-card');
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'translateX(-20px)';
+
+                setTimeout(() => {
+                    card.remove();
+
+                    // Check if no pets left
+                    const remainingPets = document.querySelectorAll('.pet-mini-card').length;
+                    if (remainingPets === 0) {
+                        document.getElementById('petList').innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No pets yet. Add your first pet!</p>';
+                        toggleDeleteMode(); // Exit delete mode
+                    }
+                }, 300);
+            }
+        }
+    </script>
+
+</body>
+
+</html>
