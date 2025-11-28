@@ -1,0 +1,246 @@
+body {
+    background: #F7EBCC 
+                url("../images/background.png") 
+                repeat;
+    background-size: 400px;  
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Layout wrapper */
+.page-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    gap: 40px;
+}
+
+/* LEFT hero card */
+.hero-card {
+    width: 600px;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.hero-image {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    margin-bottom: -10px; 
+}
+
+/* Title & Subtitle */
+.hero-title {
+    font-size: 36px;
+    margin-bottom: 4px;
+}
+
+.hero-subtitle {
+    font-size: 16px;
+    color: #444;
+}
+
+/* LOGIN card on right */
+.login-card {
+    width: 380px;
+    padding: 40px;
+    background: hsl(0, 100%, 100%);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.login-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+/* Form */
+.field-group {
+    margin-bottom: 16px;
+}
+
+.field-label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.field-input {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.login-button {
+    width: 100%;
+    margin-top: 14px;
+    padding: 12px;
+    background: #d59b20;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.login-button:hover {
+    background: #d59b20;
+}
+
+.small-text {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 14px;
+}
+
+.hero-text {
+    margin-top: -40px;   
+}
+
+/* Center layout (for signup page) */
+.center-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* SIGNUP CARD */
+.signup-card {
+    width: 380px;
+    padding: 40px;
+    background: #fffdfd;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    text-align: left;
+}
+
+.signup-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+
+/* NAVBAR */
+.navbar {
+    width: 100%;
+    padding: 30px 60px;
+    display: flex;
+    justify-content: flex-start; 
+    align-items: center;
+    background: rgba(255,255,255,0.8);
+}
+
+.nav-group {
+    display: flex;
+    align-items: center;
+    gap: 30px;  
+}
+
+.logo {
+    font-size: 40px;
+    font-weight: bold;
+}
+
+.nav-group a {
+    font-size: 22px;
+    text-decoration: none;
+    color: #000;
+}
+
+/* MAIN WRAPPER */
+.mypet-wrapper {
+    margin: 40px auto;
+    width: 90%;
+    display: grid;
+    grid-template-columns: 32% 32% 32%;
+    gap: 30px;
+}
+
+/* PET CARD */
+.pet-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.pet-photo {
+    width: 100%;
+    border-radius: 10px;
+}
+
+.pet-info {
+    background: #c7e4eb;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.pet-name {
+    font-size: 26px;
+    margin-bottom: 10px;
+}
+
+/* TAGS */
+.pet-tags {
+    margin-top: 15px;
+}
+
+.tag {
+    padding: 6px 14px;
+    border-radius: 6px;
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+.smart { background: #F7E7A9; }
+.shy { background: #C1CFFB; }
+.foodie { background: #C4EBC6; }
+
+/* REMINDER */
+.reminder-card {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    font-size: 18px;
+}
+
+.small-btn {
+    display: block;
+    margin-top: 15px;
+    padding: 10px;
+    width: 180px;
+    border-radius: 8px;
+    border: none;
+    background: rgb(233, 178, 178);
+    cursor: pointer;
+    font-size: 16px;
+}
+
+/* FACT CARD */
+.fact-card {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    font-size: 18px;
+}
+
+.fact-text {
+    margin-top: 10px;
+}
+.fact-img {
+    width: 100%;
+    margin-top: 20px;
+    border-radius: 12px;
+}
+
+
+
