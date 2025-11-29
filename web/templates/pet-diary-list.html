@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Diary - Apawtment</title>
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+
+<body class="pattern-bg">
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="nav-group">
+            <span class="logo">Apawtment</span>
+            <a href="../templates/profile.html">Profile</a>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="diary-list-wrapper">
+        <h1 class="diary-list-title">Pet Diary</h1>
+
+        <!-- ACTION BUTTONS -->
+        <div class="diary-actions">
+            <button class="back-btn" onclick="window.history.back()">← Back</button>
+            <button class="diary-action-btn add" onclick="addNewPost()">Add Post</button>
+            <button class="diary-action-btn delete" id="deleteDiaryBtn" onclick="toggleDeleteMode()">Delete</button>
+        </div>
+
+        <!-- DIARY POST CARDS -->
+        <div class="diary-grid" id="diaryGrid">
+
+            <!-- Post 1 -->
+            <article class="diary-post-card" onclick="viewPostDetail(event)">
+                <span class="delete-diary-icon" onclick="deleteDiaryPost(this)">❌</span>
+                <img src="../images/cat.webp" class="diary-post-photo" alt="Pet photo">
+                <div class="diary-post-content">
+                    <h3 class="diary-post-title">First Day Home</h3>
+                    <p class="diary-post-time">Posted: November 25, 2025, 3:30 PM</p>
+                </div>
+            </article>
+
+            <!-- Post 2 -->
+            <article class="diary-post-card" onclick="viewPostDetail(event)">
+                <span class="delete-diary-icon" onclick="deleteDiaryPost(this)">❌</span>
+                <img src="../images/cat.webp" class="diary-post-photo" alt="Pet photo">
+                <div class="diary-post-content">
+                    <h3 class="diary-post-title">Park Adventure</h3>
+                    <p class="diary-post-time">Posted: November 24, 2025, 10:15 AM</p>
+                </div>
+            </article>
+
+            <!-- Post 3 -->
+            <article class="diary-post-card" onclick="viewPostDetail(event)">
+                <span class="delete-diary-icon" onclick="deleteDiaryPost(this)">❌</span>
+                <img src="../images/cat.webp" class="diary-post-photo" alt="Pet photo">
+                <div class="diary-post-content">
+                    <h3 class="diary-post-title">Favorite Snack Time</h3>
+                    <p class="diary-post-time">Posted: November 23, 2025, 5:45 PM</p>
+                </div>
+            </article>
+
+            <!-- Post 4 -->
+            <article class="diary-post-card" onclick="viewPostDetail(event)">
+                <span class="delete-diary-icon" onclick="deleteDiaryPost(this)">❌</span>
+                <img src="../images/cat.webp" class="diary-post-photo" alt="Pet photo">
+                <div class="diary-post-content">
+                    <h3 class="diary-post-title">Exercise Routine</h3>
+                    <p class="diary-post-time">Posted: November 22, 2025, 8:20 PM</p>
+                </div>
+            </article>
+
+            <!-- Post 5 -->
+            <article class="diary-post-card" onclick="viewPostDetail(event)">
+                <span class="delete-diary-icon" onclick="deleteDiaryPost(this)">❌</span>
+                <img src="../images/cat.webp" class="diary-post-photo" alt="Pet photo">
+                <div class="diary-post-content">
+                    <h3 class="diary-post-title">Morning Routine</h3>
+                    <p class="diary-post-time">Posted: November 21, 2025, 7:00 AM</p>
+                </div>
+            </article>
+
+            <!-- Post 6 -->
+            <article class="diary-post-card" onclick="viewPostDetail(event)">
+                <span class="delete-diary-icon" onclick="deleteDiaryPost(this)">❌</span>
+                <img src="../images/cat.webp" class="diary-post-photo" alt="Pet photo">
+                <div class="diary-post-content">
+                    <h3 class="diary-post-title">Lazy Sunday</h3>
+                    <p class="diary-post-time">Posted: November 20, 2025, 2:30 PM</p>
+                </div>
+            </article>
+
+        </div>
+    </div>
+
+    <script>
+        let deleteDiaryMode = false;
+
+        function addNewPost() {
+            window.location.href = 'addPost.html';
+        }
+
+        function toggleDeleteMode() {
+            deleteDiaryMode = !deleteDiaryMode;
+            const deleteBtn = document.getElementById('deleteDiaryBtn');
+            const diaryGrid = document.getElementById('diaryGrid');
+
+            if (deleteDiaryMode) {
+                deleteBtn.textContent = 'Done';
+                deleteBtn.style.background = '#c08a1a';
+                diaryGrid.classList.add('delete-mode');
+            } else {
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.style.background = '#f5c0c0';
+                diaryGrid.classList.remove('delete-mode');
+            }
+        }
+
+        function deleteDiaryPost(icon) {
+            if (!deleteDiaryMode) return;
+
+            if (confirm('Are you sure you want to delete this post?')) {
+                const card = icon.closest('.diary-post-card');
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    card.remove();
+                }, 300);
+            }
+        }
+
+        function viewPostDetail(event) {
+            // Don't navigate if clicking on delete icon
+            if (event.target.classList.contains('delete-diary-icon') ||
+                event.target.closest('.delete-diary-icon')) {
+                event.stopPropagation();
+                return;
+            }
+            window.location.href = 'postDetail.html';
+        }
+    </script>

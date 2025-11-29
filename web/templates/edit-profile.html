@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Apawtment</title>
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+
+<body class="pattern-bg">
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="nav-group">
+            <span class="logo">Apawtment</span>
+            <a href="profile.html">Profile</a>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="edit-profile-wrapper">
+
+        <!-- EDIT PROFILE FORM -->
+        <section class="edit-profile-card">
+            <h2 class="edit-profile-title">Edit Profile</h2>
+
+            <form>
+                <!-- Profile Picture -->
+                <div class="profile-picture-section">
+                    <img src="../images/login.png" class="edit-avatar" id="profile-preview" alt="user avatar">
+                    <input type="file" id="profile-upload" accept="image/*" style="display: none;"
+                        onchange="previewImage(event, 'profile-preview')">
+                    <button type="button" class="upload-btn"
+                        onclick="document.getElementById('profile-upload').click()">Browse & Upload Photo</button>
+                </div>
+
+                <!-- Username Field -->
+                <div class="field-group">
+                    <label class="field-label" for="username">Username</label>
+                    <input class="field-input" id="username" type="text" value="user123">
+                </div>
+
+                <!-- Email Field -->
+                <div class="field-group">
+                    <label class="field-label" for="email">Email</label>
+                    <input class="field-input" id="email" type="email" value="user@example.com">
+                </div>
+
+                <!-- Full Name Field -->
+                <div class="field-group">
+                    <label class="field-label" for="fullname">Full Name</label>
+                    <input class="field-input" id="fullname" type="text" placeholder="Enter your full name">
+                </div>
+
+                <!-- Phone Field -->
+                <div class="field-group">
+                    <label class="field-label" for="phone">Phone Number</label>
+                    <input class="field-input" id="phone" type="tel" placeholder="Enter your phone number">
+                </div>
+
+                <!-- Bio Field -->
+                <div class="field-group">
+                    <label class="field-label" for="bio">Bio</label>
+                    <textarea class="field-textarea" id="bio" rows="4"
+                        placeholder="Tell us about yourself and your pets..."></textarea>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="edit-profile-actions">
+                    <button type="submit" class="profile-btn">Save Changes</button>
+                    <button type="button" class="profile-btn secondary"
+                        onclick="window.location.href='profile.html'">Cancel</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- INFO CARD -->
+        <section class="edit-info-card">
+            <h3>Profile Tips</h3>
+            <ul class="tips-list">
+                <li>Use a clear photo of yourself or your favorite pet</li>
+                <li>Keep your contact information up to date</li>
+                <li>A good bio helps other pet owners connect with you</li>
+                <li>Remember to save your changes!</li>
+            </ul>
+        </section>
+
+    </div>
+
+    <script>
+        function previewImage(event, previewId) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById(previewId).src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+
+</body>
+
+</html>

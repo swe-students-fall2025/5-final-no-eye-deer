@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Pet - Apawtment</title>
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+
+<body class="pattern-bg">
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="nav-group">
+            <span class="logo">Apawtment</span>
+            <a href="profile.html">Profile</a>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="add-pet-wrapper">
+
+        <!-- ADD PET FORM -->
+        <section class="add-pet-card">
+            <h2 class="edit-profile-title">Add New Pet</h2>
+
+            <form>
+                <!-- Pet Picture -->
+                <div class="profile-picture-section">
+                    <img src="../images/login.png" class="edit-avatar" id="pet-preview" alt="pet photo">
+                    <input type="file" id="pet-upload" accept="image/*" style="display: none;"
+                        onchange="previewImage(event, 'pet-preview')">
+                    <button type="button" class="upload-btn"
+                        onclick="document.getElementById('pet-upload').click()">Browse & Upload Photo</button>
+                </div>
+
+                <!-- Pet Name Field -->
+                <div class="field-group">
+                    <label class="field-label" for="petname">Pet Name *</label>
+                    <input class="field-input" id="petname" type="text" placeholder="Enter your pet's name" required>
+                </div>
+
+                <!-- Pet Type Field -->
+                <div class="field-group">
+                    <label class="field-label" for="pettype">Pet Type *</label>
+                    <select class="field-input" id="pettype" required>
+                        <option value="">Select pet type</option>
+                        <option value="cat">Cat</option>
+                        <option value="dog">Dog</option>
+                        <option value="bird">Bird</option>
+                        <option value="rabbit">Rabbit</option>
+                        <option value="hamster">Hamster</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <!-- Age Field -->
+                <div class="field-group">
+                    <label class="field-label" for="age">Age (years) *</label>
+                    <input class="field-input" id="age" type="number" min="0" max="30" placeholder="Enter age" required>
+                </div>
+
+                <!-- Weight Field -->
+                <div class="field-group">
+                    <label class="field-label" for="weight">Weight (lb)</label>
+                    <input class="field-input" id="weight" type="number" min="0" step="0.1" placeholder="Enter weight">
+                </div>
+
+                <!-- Breed Field -->
+                <div class="field-group">
+                    <label class="field-label" for="breed">Breed</label>
+                    <input class="field-input" id="breed" type="text" placeholder="Enter breed (optional)">
+                </div>
+
+                <!-- Personality Tags -->
+                <div class="field-group">
+                    <label class="field-label">Personality Tags</label>
+                    <div class="tag-selection">
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="smart"> Smart
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="shy"> Shy
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="foodie"> Foodie
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="playful"> Playful
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="friendly"> Friendly
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="edit-profile-actions">
+                    <button type="submit" class="profile-btn">Add Pet</button>
+                    <button type="button" class="profile-btn secondary"
+                        onclick="window.location.href='profile.html'">Cancel</button>
+                </div>
+            </form>
+        </section>
+
+    </div>
+
+    <script>
+        function previewImage(event, previewId) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById(previewId).src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+
+</body>
+
+</html>

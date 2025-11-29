@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Pet - Apawtment</title>
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+
+<body class="pattern-bg">
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="nav-group">
+            <span class="logo">Apawtment</span>
+            <a href="profile.html">Profile</a>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="add-pet-wrapper">
+
+        <!-- EDIT PET FORM -->
+        <section class="add-pet-card">
+            <h2 class="edit-profile-title">Edit Pet Information</h2>
+
+            <form>
+                <!-- Pet Picture -->
+                <div class="profile-picture-section">
+                    <img src="../images/cat.webp" class="edit-avatar" id="pet-preview" alt="pet photo">
+                    <input type="file" id="pet-upload" accept="image/*" style="display: none;"
+                        onchange="previewImage(event, 'pet-preview')">
+                    <button type="button" class="upload-btn"
+                        onclick="document.getElementById('pet-upload').click()">Browse & Upload Photo</button>
+                </div>
+
+                <!-- Pet Name Field -->
+                <div class="field-group">
+                    <label class="field-label" for="petname">Pet Name *</label>
+                    <input class="field-input" id="petname" type="text" value="PiPi" required>
+                </div>
+
+                <!-- Pet Type Field -->
+                <div class="field-group">
+                    <label class="field-label" for="pettype">Pet Type *</label>
+                    <select class="field-input" id="pettype" required>
+                        <option value="">Select pet type</option>
+                        <option value="cat" selected>Cat</option>
+                        <option value="dog">Dog</option>
+                        <option value="bird">Bird</option>
+                        <option value="rabbit">Rabbit</option>
+                        <option value="hamster">Hamster</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <!-- Age Field -->
+                <div class="field-group">
+                    <label class="field-label" for="age">Age (years) *</label>
+                    <input class="field-input" id="age" type="number" min="0" max="30" value="1" required>
+                </div>
+
+                <!-- Weight Field -->
+                <div class="field-group">
+                    <label class="field-label" for="weight">Weight (lb)</label>
+                    <input class="field-input" id="weight" type="number" min="0" step="0.1" value="10">
+                </div>
+
+                <!-- Breed Field -->
+                <div class="field-group">
+                    <label class="field-label" for="breed">Breed</label>
+                    <input class="field-input" id="breed" type="text" placeholder="Enter breed (optional)">
+                </div>
+
+                <!-- Personality Tags -->
+                <div class="field-group">
+                    <label class="field-label">Personality Tags</label>
+                    <div class="tag-selection">
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="smart" checked> Smart
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="shy" checked> Shy
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="foodie" checked> Foodie
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="playful"> Playful
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="friendly"> Friendly
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="edit-profile-actions">
+                    <button type="submit" class="profile-btn" onclick="event.preventDefault(); saveAndReturn();">Save
+                        Changes</button>
+                    <button type="button" class="profile-btn secondary" onclick="returnToPetPage()">Cancel</button>
+                </div>
+            </form>
+        </section>
+
+    </div>
+
+    <script>
+        let currentPetType = '';
+
+        function previewImage(event, previewId) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById(previewId).src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function returnToPetPage() {
+            if (currentPetType) {
+                window.location.href = currentPetType + 'pet.html';
+            } else {
+                window.location.href = 'profile.html';
+            }
+        }
+
+        function saveAndReturn() {
+            // Here you would normally save the data
+            // For now, just redirect back to the pet page
+            alert('Changes saved successfully!');
+            returnToPetPage();
+        }
+
+        // Load pet data based on URL parameter
+        window.addEventListener('DOMContentLoaded', function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const petType = urlParams.get('pet');
+            currentPetType = petType;
+
+            const petData = {
+                'cat': {
+                    name: 'PiPi',
+                    type: 'cat',
+                    age: 1,
+                    weight: 10,
+                    image: '../images/cat.webp',
+                    tags: ['smart', 'shy', 'foodie']
+                },
+                'dog': {
+                    name: 'Max',
+                    type: 'dog',
+                    age: 3,
+                    weight: 45,
+                    image: '../images/dog.jpg',
+                    tags: ['playful', 'friendly']
+                },
+                'rabbit': {
+                    name: 'Fluffy',
+                    type: 'rabbit',
+                    age: 2,
+                    weight: 4,
+                    image: '../images/rabbit.jpg',
+                    tags: ['shy', 'foodie']
+                },
+                'hamster': {
+                    name: 'Peanut',
+                    type: 'hamster',
+                    age: 1,
+                    weight: 0.5,
+                    image: '../images/hamster.jpg',
+                    tags: ['smart', 'foodie']
+                },
+                'bird': {
+                    name: 'Tweety',
+                    type: 'bird',
+                    age: 2,
+                    weight: 0.3,
+                    image: '../images/bird.jpg',
+                    tags: ['smart', 'friendly']
+                }
+            };
+
+            if (petType && petData[petType]) {
+                const pet = petData[petType];
+                document.getElementById('petname').value = pet.name;
+                document.getElementById('pettype').value = pet.type;
+                document.getElementById('age').value = pet.age;
+                document.getElementById('weight').value = pet.weight;
+                document.getElementById('pet-preview').src = pet.image;
+
+                // Uncheck all checkboxes first
+                document.querySelectorAll('.tag-checkbox input').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+
+                // Check the appropriate tags
+                pet.tags.forEach(tag => {
+                    const checkbox = document.querySelector(`.tag-checkbox input[value="${tag}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+        });
+    </script>
+
+</body>
+
+</html>
