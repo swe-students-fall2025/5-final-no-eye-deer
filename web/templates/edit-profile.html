@@ -5,77 +5,71 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile - Apawtment</title>
-    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 
 <body class="pattern-bg">
 
-    <!-- NAVBAR -->
     <header class="navbar">
         <div class="nav-group">
             <span class="logo">Apawtment</span>
-            <a href="profile.html">Profile</a>
+            <a href="{{ url_for('profile') }}">Profile</a>
         </div>
     </header>
 
-    <!-- MAIN CONTENT -->
     <div class="edit-profile-wrapper">
 
-        <!-- EDIT PROFILE FORM -->
         <section class="edit-profile-card">
             <h2 class="edit-profile-title">Edit Profile</h2>
 
-            <form>
-                <!-- Profile Picture -->
+            <form action="{{ url_for('edit_profile') }}" method="post" enctype="multipart/form-data">
                 <div class="profile-picture-section">
-                    <img src="../images/login.png" class="edit-avatar" id="profile-preview" alt="user avatar">
-                    <input type="file" id="profile-upload" accept="image/*" style="display: none;"
-                        onchange="previewImage(event, 'profile-preview')">
+                    <img src="{{ user.avatar_url or url_for('static', filename='images/login.png') }}"
+                         class="edit-avatar" id="profile-preview" alt="user avatar">
+                    <input type="file" id="profile-upload" name="avatar" accept="image/*" style="display: none;"
+                           onchange="previewImage(event, 'profile-preview')">
                     <button type="button" class="upload-btn"
-                        onclick="document.getElementById('profile-upload').click()">Browse & Upload Photo</button>
+                            onclick="document.getElementById('profile-upload').click()">Browse & Upload Photo</button>
                 </div>
 
-                <!-- Username Field -->
                 <div class="field-group">
                     <label class="field-label" for="username">Username</label>
-                    <input class="field-input" id="username" type="text" value="user123">
+                    <input class="field-input" id="username" name="username" type="text"
+                           value="{{ user.username }}">
                 </div>
 
-                <!-- Email Field -->
                 <div class="field-group">
                     <label class="field-label" for="email">Email</label>
-                    <input class="field-input" id="email" type="email" value="user@example.com">
+                    <input class="field-input" id="email" name="email" type="email"
+                           value="{{ user.email }}">
                 </div>
 
-                <!-- Full Name Field -->
                 <div class="field-group">
                     <label class="field-label" for="fullname">Full Name</label>
-                    <input class="field-input" id="fullname" type="text" placeholder="Enter your full name">
+                    <input class="field-input" id="fullname" name="full_name" type="text"
+                           value="{{ user.full_name or '' }}" placeholder="Enter your full name">
                 </div>
 
-                <!-- Phone Field -->
                 <div class="field-group">
                     <label class="field-label" for="phone">Phone Number</label>
-                    <input class="field-input" id="phone" type="tel" placeholder="Enter your phone number">
+                    <input class="field-input" id="phone" name="phone" type="tel"
+                           value="{{ user.phone or '' }}" placeholder="Enter your phone number">
                 </div>
 
-                <!-- Bio Field -->
                 <div class="field-group">
                     <label class="field-label" for="bio">Bio</label>
-                    <textarea class="field-textarea" id="bio" rows="4"
-                        placeholder="Tell us about yourself and your pets..."></textarea>
+                    <textarea class="field-textarea" id="bio" name="bio" rows="4"
+                              placeholder="Tell us about yourself and your pets...">{{ user.bio or '' }}</textarea>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="edit-profile-actions">
                     <button type="submit" class="profile-btn">Save Changes</button>
                     <button type="button" class="profile-btn secondary"
-                        onclick="window.location.href='profile.html'">Cancel</button>
+                            onclick="window.location.href='{{ url_for('profile') }}'">Cancel</button>
                 </div>
             </form>
         </section>
 
-        <!-- INFO CARD -->
         <section class="edit-info-card">
             <h3>Profile Tips</h3>
             <ul class="tips-list">

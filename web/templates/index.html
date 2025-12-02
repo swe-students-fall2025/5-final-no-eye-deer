@@ -5,17 +5,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Apawtment - Login</title>
-    <link rel="stylesheet" href="../css/main.css">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 
 <body>
     <div class="page-wrapper">
 
-        <!-- Left side hero section -->
         <section class="hero">
             <div class="hero-card">
 
-                <img src="../images/login.png" class="hero-image" alt="pets illustration">
+                <img src="{{ url_for('static', filename='images/login.png') }}"
+                     class="hero-image"
+                     alt="pets illustration">
 
                 <div class="hero-text">
                     <h1 class="hero-title">Apawtment</h1>
@@ -24,37 +26,40 @@
             </div>
         </section>
 
-        <!-- Right login section -->
         <section class="login-card">
             <h2 class="login-title">Good to see you again </h2>
 
-            <form>
+            <form action="{{ url_for('login') }}" method="post">
                 <div class="field-group">
-                    <label class="field-label" for="username">Username</label>
-                    <input class="field-input" id="username" type="text" placeholder="Enter your username">
+                    <label class="field-label" for="email">Email</label>
+                    <input class="field-input"
+                           id="email"
+                           type="text"
+                           name="email"
+                           placeholder="Enter your email">
                 </div>
 
                 <div class="field-group">
                     <label class="field-label" for="password">Password</label>
-                    <input class="field-input" id="password" type="password" placeholder="Enter your password">
+                    <input class="field-input"
+                           id="password"
+                           type="password"
+                           name="password"
+                           placeholder="Enter your password">
                 </div>
 
-                <button class="login-button" type="button" onclick="window.location.href='profile.html'">
+                <button class="login-button" type="submit">
                     Log in
                 </button>
             </form>
 
             <p class="small-text">
                 Don't have an account?
-                <a href="sign-up.html">Sign up</a>
+                <a href="{{ url_for('signup') }}">Sign up</a>
             </p>
         </section>
 
     </div>
-</body>
-
-</html>
-
 </body>
 
 </html>

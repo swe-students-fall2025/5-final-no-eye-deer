@@ -5,101 +5,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Pet - Apawtment</title>
-    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 
 <body class="pattern-bg">
 
-    <!-- NAVBAR -->
     <header class="navbar">
         <div class="nav-group">
             <span class="logo">Apawtment</span>
-            <a href="profile.html">Profile</a>
+            <a href="{{ url_for('profile') }}">Profile</a>
         </div>
     </header>
 
-    <!-- MAIN CONTENT -->
     <div class="add-pet-wrapper">
 
-        <!-- EDIT PET FORM -->
         <section class="add-pet-card">
             <h2 class="edit-profile-title">Edit Pet Information</h2>
 
-            <form>
-                <!-- Pet Picture -->
+            <form action="{{ url_for('edit_pet', pet_id=pet_id) }}" method="post" enctype="multipart/form-data">
                 <div class="profile-picture-section">
-                    <img src="../images/cat.webp" class="edit-avatar" id="pet-preview" alt="pet photo">
-                    <input type="file" id="pet-upload" accept="image/*" style="display: none;"
-                        onchange="previewImage(event, 'pet-preview')">
+                    <img src="{{ pet.photo_url or url_for('static', filename='images/cat.webp') }}"
+                         class="edit-avatar" id="pet-preview" alt="pet photo">
+                    <input type="file" id="pet-upload" name="photo"
+                           accept="image/*" style="display: none;"
+                           onchange="previewImage(event, 'pet-preview')">
                     <button type="button" class="upload-btn"
-                        onclick="document.getElementById('pet-upload').click()">Browse & Upload Photo</button>
+                            onclick="document.getElementById('pet-upload').click()">
+                        Browse & Upload Photo
+                    </button>
                 </div>
 
-                <!-- Pet Name Field -->
                 <div class="field-group">
                     <label class="field-label" for="petname">Pet Name *</label>
-                    <input class="field-input" id="petname" type="text" value="PiPi" required>
+                    <input class="field-input" id="petname" name="name" type="text"
+                           value="{{ pet.name }}" required>
                 </div>
 
-                <!-- Pet Type Field -->
                 <div class="field-group">
                     <label class="field-label" for="pettype">Pet Type *</label>
-                    <select class="field-input" id="pettype" required>
+                    <select class="field-input" id="pettype" name="pet_type" required>
                         <option value="">Select pet type</option>
-                        <option value="cat" selected>Cat</option>
-                        <option value="dog">Dog</option>
-                        <option value="bird">Bird</option>
-                        <option value="rabbit">Rabbit</option>
-                        <option value="hamster">Hamster</option>
-                        <option value="other">Other</option>
+                        <option value="cat" {% if pet.pet_type == 'cat' %}selected{% endif %}>Cat</option>
+                        <option value="dog" {% if pet.pet_type == 'dog' %}selected{% endif %}>Dog</option>
+                        <option value="bird" {% if pet.pet_type == 'bird' %}selected{% endif %}>Bird</option>
+                        <option value="rabbit" {% if pet.pet_type == 'rabbit' %}selected{% endif %}>Rabbit</option>
+                        <option value="hamster" {% if pet.pet_type == 'hamster' %}selected{% endif %}>Hamster</option>
+                        <option value="other" {% if pet.pet_type == 'other' %}selected{% endif %}>Other</option>
                     </select>
                 </div>
 
-                <!-- Age Field -->
                 <div class="field-group">
                     <label class="field-label" for="age">Age (years) *</label>
-                    <input class="field-input" id="age" type="number" min="0" max="30" value="1" required>
+                    <input class="field-input" id="age" name="age" type="number"
+                           min="0" max="30" value="{{ pet.age }}" required>
                 </div>
 
-                <!-- Weight Field -->
                 <div class="field-group">
                     <label class="field-label" for="weight">Weight (lb)</label>
-                    <input class="field-input" id="weight" type="number" min="0" step="0.1" value="10">
+                    <input class="field-input" id="weight" name="weight" type="number"
+                           min="0" step="0.1" value="{{ pet.weight }}">
                 </div>
 
-                <!-- Breed Field -->
                 <div class="field-group">
                     <label class="field-label" for="breed">Breed</label>
-                    <input class="field-input" id="breed" type="text" placeholder="Enter breed (optional)">
+                    <input class="field-input" id="breed" name="breed" type="text"
+                           value="{{ pet.breed or '' }}" placeholder="Enter breed (optional)">
                 </div>
 
-                <!-- Personality Tags -->
                 <div class="field-group">
                     <label class="field-label">Personality Tags</label>
                     <div class="tag-selection">
                         <label class="tag-checkbox">
-                            <input type="checkbox" value="smart" checked> Smart
+                            <input type="checkbox" name="tags" value="smart"
+                                   {% if pet.tags and 'smart' in pet.tags %}checked{% endif %}>
+                            Smart
                         </label>
                         <label class="tag-checkbox">
-                            <input type="checkbox" value="shy" checked> Shy
+                            <input type="checkbox" name="tags" value="shy"
+                                   {% if pet.tags and 'shy' in pet.tags %}checked{% endif %}>
+                            Shy
                         </label>
                         <label class="tag-checkbox">
-                            <input type="checkbox" value="foodie" checked> Foodie
+                            <input type="checkbox" name="tags" value="foodie"
+                                   {% if pet.tags and 'foodie' in pet.tags %}checked{% endif %}>
+                            Foodie
                         </label>
                         <label class="tag-checkbox">
-                            <input type="checkbox" value="playful"> Playful
+                            <input type="checkbox" name="tags" value="playful"
+                                   {% if pet.tags and 'playful' in pet.tags %}checked{% endif %}>
+                            Playful
                         </label>
                         <label class="tag-checkbox">
-                            <input type="checkbox" value="friendly"> Friendly
+                            <input type="checkbox" name="tags" value="friendly"
+                                   {% if pet.tags and 'friendly' in pet.tags %}checked{% endif %}>
+                            Friendly
                         </label>
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="edit-profile-actions">
-                    <button type="submit" class="profile-btn" onclick="event.preventDefault(); saveAndReturn();">Save
-                        Changes</button>
-                    <button type="button" class="profile-btn secondary" onclick="returnToPetPage()">Cancel</button>
+                    <button type="submit" class="profile-btn">Save Changes</button>
+                    <button type="button" class="profile-btn secondary"
+                            onclick="window.location.href='{{ url_for('profile') }}'">
+                        Cancel
+                    </button>
                 </div>
             </form>
         </section>
@@ -107,103 +116,16 @@
     </div>
 
     <script>
-        let currentPetType = '';
-
         function previewImage(event, previewId) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     document.getElementById(previewId).src = e.target.result;
-                }
+                };
                 reader.readAsDataURL(file);
             }
         }
-
-        function returnToPetPage() {
-            if (currentPetType) {
-                window.location.href = currentPetType + 'pet.html';
-            } else {
-                window.location.href = 'profile.html';
-            }
-        }
-
-        function saveAndReturn() {
-            // Here you would normally save the data
-            // For now, just redirect back to the pet page
-            alert('Changes saved successfully!');
-            returnToPetPage();
-        }
-
-        // Load pet data based on URL parameter
-        window.addEventListener('DOMContentLoaded', function () {
-            const urlParams = new URLSearchParams(window.location.search);
-            const petType = urlParams.get('pet');
-            currentPetType = petType;
-
-            const petData = {
-                'cat': {
-                    name: 'PiPi',
-                    type: 'cat',
-                    age: 1,
-                    weight: 10,
-                    image: '../images/cat.webp',
-                    tags: ['smart', 'shy', 'foodie']
-                },
-                'dog': {
-                    name: 'Max',
-                    type: 'dog',
-                    age: 3,
-                    weight: 45,
-                    image: '../images/dog.jpg',
-                    tags: ['playful', 'friendly']
-                },
-                'rabbit': {
-                    name: 'Fluffy',
-                    type: 'rabbit',
-                    age: 2,
-                    weight: 4,
-                    image: '../images/rabbit.jpg',
-                    tags: ['shy', 'foodie']
-                },
-                'hamster': {
-                    name: 'Peanut',
-                    type: 'hamster',
-                    age: 1,
-                    weight: 0.5,
-                    image: '../images/hamster.jpg',
-                    tags: ['smart', 'foodie']
-                },
-                'bird': {
-                    name: 'Tweety',
-                    type: 'bird',
-                    age: 2,
-                    weight: 0.3,
-                    image: '../images/bird.jpg',
-                    tags: ['smart', 'friendly']
-                }
-            };
-
-            if (petType && petData[petType]) {
-                const pet = petData[petType];
-                document.getElementById('petname').value = pet.name;
-                document.getElementById('pettype').value = pet.type;
-                document.getElementById('age').value = pet.age;
-                document.getElementById('weight').value = pet.weight;
-                document.getElementById('pet-preview').src = pet.image;
-
-                // Uncheck all checkboxes first
-                document.querySelectorAll('.tag-checkbox input').forEach(checkbox => {
-                    checkbox.checked = false;
-                });
-
-                // Check the appropriate tags
-                pet.tags.forEach(tag => {
-                    const checkbox = document.querySelector(`.tag-checkbox input[value="${tag}"]`);
-                    if (checkbox) checkbox.checked = true;
-                });
-            }
-        });
     </script>
 
 </body>
