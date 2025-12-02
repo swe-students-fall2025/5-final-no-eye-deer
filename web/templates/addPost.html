@@ -4,73 +4,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Post - Apawtment</title>
-    <link rel="stylesheet" href="../css/main.css">
+    <title>Add Diary Post - Apawtment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 
 <body class="pattern-bg">
 
-    <!-- NAVBAR -->
-    <header class="navbar">
-        <div class="nav-group">
-            <span class="logo">Apawtment</span>
-            <a href="profile.html">Profile</a>
-        </div>
-    </header>
-
-    <!-- MAIN CONTENT -->
-    <div class="add-pet-wrapper">
-
-        <!-- ADD POST FORM -->
-        <section class="add-pet-card">
-            <h2 class="edit-profile-title">Add New Post</h2>
-
-            <form>
-                <!-- Post Photo -->
-                <div class="profile-picture-section">
-                    <img src="../images/login.png" class="edit-avatar" id="post-preview" alt="post photo">
-                    <input type="file" id="post-upload" accept="image/*" style="display: none;"
-                        onchange="previewImage(event, 'post-preview')">
-                    <button type="button" class="upload-btn"
-                        onclick="document.getElementById('post-upload').click()">Browse & Upload Photo</button>
-                </div>
-
-                <!-- Post Title Field -->
-                <div class="field-group">
-                    <label class="field-label" for="posttitle">Post Title *</label>
-                    <input class="field-input" id="posttitle" type="text" placeholder="Enter post title" required>
-                </div>
-
-                <!-- Post Text Field -->
-                <div class="field-group">
-                    <label class="field-label" for="posttext">Post Text *</label>
-                    <textarea class="field-input post-textarea" id="posttext" rows="8"
-                        placeholder="Share your pet's story or moment..." required></textarea>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="profile-actions">
-                    <button type="button" class="profile-btn secondary"
-                        onclick="window.location.href='pet-diary-list.html'">Cancel</button>
-                    <button type="button" class="profile-btn" onclick="window.location.href='postDetail.html'">Publish
-                        Post</button>
-                </div>
-            </form>
-        </section>
-
+<header class="navbar">
+    <div class="nav-group">
+        <span class="logo">Apawtment</span>
+        <a href="{{ url_for('profile') }}">Profile</a>
     </div>
+</header>
 
-    <script>
-        function previewImage(event, previewId) {
+<div class="add-pet-wrapper">
+
+    <section class="add-pet-card">
+        <h2 class="edit-profile-title">Add Diary Post for {{ pet.name }}</h2>
+
+        <form action="{{ url_for('add_diary_post', pet_id=pet_id) }}"
+              method="post"
+              enctype="multipart/form-data">
+
+            <div class="field-group">
+                <label class="field-label" for="title">Title *</label>
+                <input class="field-input"
+                       id="title"
+                       name="title"
+                       type="text"
+                       placeholder="Give your diary a title"
+                       required>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Upload Photo</label>
+                <div class="upload-row">
+                    <img id="preview-img"
+                         src="{{ url_for('static', filename='images/login.png') }}"
+                         class="edit-avatar"
+                         style="display: none;"
+                         alt="photo preview">
+
+                    <div class="upload-controls">
+                        <button type="button"
+                                class="upload-btn"
+                                onclick="document.getElementById('photo').click()">
+                            Choose a file
+                        </button>
+                        <span id="photo-filename" class="small-text">No file chosen</span>
+                        <input id="photo"
+                               name="photo"
+                               type="file"
+                               accept="image/*"
+                               style="display: none;"
+                               onchange="handlePhotoChange(event)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label" for="photo_url">Photo URL</label>
+                <input class="field-input"
+                       id="photo_url"
+                       name="photo_url"
+                       type="url"
+                       placeholder="Paste a photo URL (optional)">
+            </div>
+
+            <div class="field-group">
+                <label class="field-label" for="description">Description</label>
+                <textarea class="field-input"
+                          id="description"
+                          name="description"
+                          rows="5"
+                          placeholder="Write something about today..."></textarea>
+            </div>
+
+            <div class="edit-profile-actions">
+                <button type="submit" class="profile-btn">Publish Diary</button>
+                <button type="button" class="profile-btn secondary"
+                        onclick="window.location.href='{{ url_for('pet_diary_list', pet_id=pet_id) }}'">
+                    Back to list
+                </button>
+            </div>
+
+        </form>
+    </section>
+
+</div>
+
+<script>
+    function handlePhotoChange(event) {
+        const input = event.target;
+        const label = document.getElementById('photo-filename');
+        const preview = document.getElementById('preview-img');
+        const file = input.files && input.files[0];
+
+        if (file) {
+            label.textContent = file.name;
             const reader = new FileReader();
-            reader.onload = function () {
-                const output = document.getElementById(previewId);
-                output.src = reader.result;
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
             };
-            reader.readAsDataURL(event.target.files[0]);
+            reader.readAsDataURL(file);
+        } else {
+            label.textContent = 'No file chosen';
+            preview.style.display = 'none';
         }
-    </script>
+    }
+</script>
 
 </body>
-
 </html>

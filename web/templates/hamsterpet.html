@@ -1,168 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nibbles the Hamster - Apawtment</title>
-    <link rel="stylesheet" href="../css/main.css">
+    <title>{{ pet.name }} - Apawtment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 
 <body class="pattern-bg">
-
-    <!-- NAVBAR -->
-    <header class="navbar">
-        <div class="nav-group">
-            <span class="logo">Apawtment</span>
-            <a href="../templates/profile.html">Profile</a>
-        </div>
-    </header>
-
-    <!-- MAIN CONTENT -->
-    <div class="mypet-wrapper">
-
-        <!-- LEFT: PET INFO -->
-        <section class="pet-card">
-            <img src="../images/hamster.jpg" class="pet-photo" alt="pet">
-
-            <div class="pet-info">
-                <h2 class="pet-name">Peanut</h2>
-
-                <p>Age : 1 years old <br> Weight : 0.5 lb</p>
-
-                <div class="pet-tags">
-                    <span class="tag smart">Smart</span>
-                    <span class="tag shy">Shy</span>
-                    <span class="tag foodie">Foodie</span>
-                </div>
-
-                <button class="edit-pet-btn" onclick="window.location.href='editPet.html?pet=hamster'">Edit Pet
-                    Info</button>
-            </div>
-        </section>
-
-        <!-- MIDDLE: REMINDER -->
-        <section class="reminder-card">
-            <h3>Reminders</h3>
-
-            <ul class="reminder-list" id="reminderList">
-                <li class="reminder-item">
-                    <input type="checkbox" id="reminder1" class="reminder-checkbox">
-                    <label for="reminder1">Clean bedding</label>
-                    <span class="delete-reminder-icon" onclick="deleteReminder(this)">❌</span>
-                </li>
-                <li class="reminder-item">
-                    <input type="checkbox" id="reminder2" class="reminder-checkbox">
-                    <label for="reminder2">Get cat treats</label>
-                    <span class="delete-reminder-icon" onclick="deleteReminder(this)">❌</span>
-                </li>
-                <li class="reminder-item">
-                    <input type="checkbox" id="reminder3" class="reminder-checkbox">
-                    <label for="reminder3">Clean the ears</label>
-                    <span class="delete-reminder-icon" onclick="deleteReminder(this)">❌</span>
-                </li>
-                <li class="reminder-item">
-                    <input type="checkbox" id="reminder4" class="reminder-checkbox">
-                    <label for="reminder4">Give flea/tick treatment</label>
-                    <span class="delete-reminder-icon" onclick="deleteReminder(this)">❌</span>
-                </li>
-            </ul>
-
-            <div class="reminder-actions">
-                <button class="reminder-btn add" onclick="addNewReminder()">Add New</button>
-                <button class="reminder-btn delete" id="deleteBtn" onclick="toggleDeleteMode()">Delete</button>
-            </div>
-        </section>
-
-        <!-- RIGHT: TODAY FACT -->
-        <section class="fact-card">
-            <button class="diary-title-btn" onclick="window.location.href='pet-diary-list.html?pet=hamster'">Pet's
-                Diary</button>
-            <p class="fact-text">
-                Did you know? Hamsters can store food in their cheek pouches
-                equal to up to 20% of their body weight. They use these pouches
-                to carry food back to their burrows!
-            </p>
-            <img src="../images/did-you-know.png" class="fact-img">
-        </section>
-
+<header class="navbar">
+    <div class="nav-group">
+        <span class="logo">Apawtment</span>
+        <a href="{{ url_for('profile') }}">Profile</a>
     </div>
+</header>
 
-    <script>
-        let reminderCount = 4;
-        let deleteModeActive = false;
+<div class="mypet-wrapper">
 
-        function addNewReminder() {
-            const reminderText = prompt("Enter new reminder:");
+    <section class="pet-card">
+        <img src="{{ pet.photo_url or url_for('static', filename='images/hamster.jpg') }}"
+             class="pet-photo" alt="pet">
 
-            if (reminderText && reminderText.trim() !== "") {
-                reminderCount++;
-                const reminderList = document.getElementById('reminderList');
-                const newReminder = document.createElement('li');
-                newReminder.className = 'reminder-item';
-                newReminder.innerHTML = `
-                    <input type="checkbox" id="reminder${reminderCount}" class="reminder-checkbox">
-                    <label for="reminder${reminderCount}">${reminderText.trim()}</label>
+        <div class="pet-info">
+            <h2 class="pet-name">{{ pet.name }}</h2>
+
+            <p>
+                Age : {{ pet.age }} year{% if pet.age != 1 %}s{% endif %} old<br>
+                {% if pet.weight %}
+                    Weight : {{ pet.weight }} lb
+                {% endif %}
+            </p>
+
+            <div class="pet-tags">
+                {% for tag in pet.tags or [] %}
+                    <span class="tag {{ tag|lower }}">{{ tag|capitalize }}</span>
+                {% endfor %}
+            </div>
+
+            <button class="edit-pet-btn"
+                    onclick="window.location.href='{{ url_for('edit_pet', pet_id=pet_id) }}'">
+                Edit Pet Info
+            </button>
+        </div>
+    </section>
+
+    <section class="reminder-card">
+        <h3>Reminders</h3>
+
+        <ul class="reminder-list" id="reminderList">
+            {% for r in reminders %}
+                <li class="reminder-item">
+                    <input type="checkbox"
+                           id="reminder{{ loop.index }}"
+                           class="reminder-checkbox">
+                    <label for="reminder{{ loop.index }}">{{ r.text }}</label>
                     <span class="delete-reminder-icon" onclick="deleteReminder(this)">❌</span>
-                `;
-                reminderList.appendChild(newReminder);
+                </li>
+            {% endfor %}
+        </ul>
 
-                // Add animation
-                newReminder.style.opacity = '0';
-                newReminder.style.transform = 'translateX(-20px)';
-                setTimeout(() => {
-                    newReminder.style.transition = 'all 0.3s ease';
-                    newReminder.style.opacity = '1';
-                    newReminder.style.transform = 'translateX(0)';
-                }, 10);
-            }
+        <div class="reminder-actions">
+            <button class="reminder-btn add" onclick="addNewReminder()">Add New</button>
+            <button class="reminder-btn delete" id="deleteBtn" onclick="toggleDeleteMode()">Delete</button>
+        </div>
+    </section>
+
+    <section class="fact-card">
+        <button class="diary-title-btn"
+                onclick="window.location.href='{{ url_for('pet_diary_list', pet_id=pet_id) }}'">
+            Pet's Diary
+        </button>
+        <p class="fact-text">
+            {{ fact_text }}
+        </p>
+        <img src="{{ url_for('static', filename='images/did-you-know.png') }}" class="fact-img" alt="pet fact">
+    </section>
+
+</div>
+
+<script>
+    let reminderCount = {{ reminders|length }};
+    let deleteModeActive = false;
+
+    function addNewReminder() {
+        const reminderText = prompt("Enter new reminder:");
+        if (reminderText && reminderText.trim() !== "") {
+            reminderCount++;
+            const reminderList = document.getElementById('reminderList');
+            const newReminder = document.createElement('li');
+            newReminder.className = 'reminder-item';
+            newReminder.innerHTML = `
+                <input type="checkbox" id="reminder${reminderCount}" class="reminder-checkbox">
+                <label for="reminder${reminderCount}">${reminderText.trim()}</label>
+                <span class="delete-reminder-icon" onclick="deleteReminder(this)">❌</span>
+            `;
+            reminderList.appendChild(newReminder);
+
+            newReminder.style.opacity = '0';
+            newReminder.style.transform = 'translateX(-20px)';
+            setTimeout(() => {
+                newReminder.style.transition = 'all 0.3s ease';
+                newReminder.style.opacity = '1';
+                newReminder.style.transform = 'translateX(0)';
+            }, 10);
         }
+    }
 
-        function toggleDeleteMode() {
-            deleteModeActive = !deleteModeActive;
-            const reminderItems = document.querySelectorAll('.reminder-item');
-            const deleteBtn = document.getElementById('deleteBtn');
+    function toggleDeleteMode() {
+        deleteModeActive = !deleteModeActive;
+        const reminderItems = document.querySelectorAll('.reminder-item');
+        const deleteBtn = document.getElementById('deleteBtn');
 
-            if (deleteModeActive) {
-                reminderItems.forEach(item => {
-                    item.classList.add('delete-mode');
-                });
-                deleteBtn.innerHTML = '✓ Done';
-                deleteBtn.style.background = '#c08a1a';
-            } else {
-                reminderItems.forEach(item => {
-                    item.classList.remove('delete-mode');
-                });
-                deleteBtn.innerHTML = 'Delete';
-                deleteBtn.style.background = '#f5c0c0';
-            }
+        if (deleteModeActive) {
+            reminderItems.forEach(item => item.classList.add('delete-mode'));
+            deleteBtn.innerHTML = '✓ Done';
+            deleteBtn.style.background = '#c08a1a';
+        } else {
+            reminderItems.forEach(item => item.classList.remove('delete-mode'));
+            deleteBtn.innerHTML = 'Delete';
+            deleteBtn.style.background = '#f5c0c0';
         }
+    }
 
-        function deleteReminder(element) {
-            if (!deleteModeActive) return;
+    function deleteReminder(element) {
+        if (!deleteModeActive) return;
 
-            const reminderItem = element.closest('.reminder-item');
-            const reminderText = reminderItem.querySelector('label').textContent;
+        const reminderItem = element.closest('.reminder-item');
+        const reminderText = reminderItem.querySelector('label').textContent;
 
-            if (confirm(`Delete reminder: "${reminderText}"?`)) {
-                reminderItem.style.transition = 'all 0.3s ease';
-                reminderItem.style.opacity = '0';
-                reminderItem.style.transform = 'translateX(-20px)';
+        if (confirm(`Delete reminder: "${reminderText}"?`)) {
+            reminderItem.style.transition = 'all 0.3s ease';
+            reminderItem.style.opacity = '0';
+            reminderItem.style.transform = 'translateX(-20px)';
 
-                setTimeout(() => {
-                    reminderItem.remove();
-
-                    // Check if no reminders left
-                    const remainingReminders = document.querySelectorAll('.reminder-item').length;
-                    if (remainingReminders === 0) {
-                        document.getElementById('reminderList').innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No reminders yet. Add your first reminder!</p>';
-                        toggleDeleteMode(); // Exit delete mode
-                    }
-                }, 300);
-            }
+            setTimeout(() => {
+                reminderItem.remove();
+                const remainingReminders = document.querySelectorAll('.reminder-item').length;
+                if (remainingReminders === 0) {
+                    document.getElementById('reminderList').innerHTML =
+                        '<p style="text-align: center; color: #666; padding: 20px;">No reminders yet. Add your first reminder!</p>';
+                    toggleDeleteMode();
+                }
+            }, 300);
         }
-    </script>
+    }
+</script>
 
 </body>
-
 </html>

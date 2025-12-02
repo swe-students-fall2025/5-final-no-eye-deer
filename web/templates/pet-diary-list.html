@@ -1,96 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pet Diary - Apawtment</title>
-    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 
 <body class="pattern-bg">
 
-    <!-- NAVBAR -->
     <header class="navbar">
         <div class="nav-group">
             <span class="logo">Apawtment</span>
-            <a href="../templates/profile.html">Profile</a>
+            <a href="{{ url_for('profile') }}">Profile</a>
         </div>
     </header>
 
-    <!-- MAIN CONTENT -->
     <div class="diary-list-wrapper">
-        <h1 class="diary-list-title">Pet Diary</h1>
+        <h1 class="diary-list-title">{{ pet.name }}'s Diary</h1>
 
-        <!-- ACTION BUTTONS -->
         <div class="diary-actions">
-            <button class="back-btn" onclick="window.history.back()">← Back</button>
-            <button class="diary-action-btn add" onclick="addNewPost()">Add Post</button>
+            <button class="back-btn" onclick="window.location.href='{{ url_for('profile') }}'">← Back</button>
+            <button class="diary-action-btn add"
+                    onclick="window.location.href='{{ url_for('add_diary_post', pet_id=str(pet._id)) }}'">
+                Add Post
+            </button>
             <button class="diary-action-btn delete" id="deleteDiaryBtn" onclick="toggleDeleteMode()">Delete</button>
         </div>
 
-        <!-- DIARY POST CARDS -->
         <div class="diary-grid" id="diaryGrid">
 
-            <!-- Post 1 -->
-            <article class="diary-post-card" onclick="viewPostDetail(event)">
-                <span class="delete-diary-icon" onclick="deleteDiaryPost(this)">❌</span>
-                <img src="../images/cat.webp" class="diary-post-photo" alt="Pet photo">
-                <div class="diary-post-content">
-                    <h3 class="diary-post-title">First Day Home</h3>
-                    <p class="diary-post-time">Posted: November 25, 2025, 3:30 PM</p>
-                </div>
-            </article>
-
-            <!-- Post 2 -->
-            <article class="diary-post-card" onclick="viewPostDetail(event)">
-                <span class="delete-diary-icon" onclick="deleteDiaryPost(this)">❌</span>
-                <img src="../images/cat.webp" class="diary-post-photo" alt="Pet photo">
-                <div class="diary-post-content">
-                    <h3 class="diary-post-title">Park Adventure</h3>
-                    <p class="diary-post-time">Posted: November 24, 2025, 10:15 AM</p>
-                </div>
-            </article>
-
-            <!-- Post 3 -->
-            <article class="diary-post-card" onclick="viewPostDetail(event)">
-                <span class="delete-diary-icon" onclick="deleteDiaryPost(this)">❌</span>
-                <img src="../images/cat.webp" class="diary-post-photo" alt="Pet photo">
-                <div class="diary-post-content">
-                    <h3 class="diary-post-title">Favorite Snack Time</h3>
-                    <p class="diary-post-time">Posted: November 23, 2025, 5:45 PM</p>
-                </div>
-            </article>
-
-            <!-- Post 4 -->
-            <article class="diary-post-card" onclick="viewPostDetail(event)">
-                <span class="delete-diary-icon" onclick="deleteDiaryPost(this)">❌</span>
-                <img src="../images/cat.webp" class="diary-post-photo" alt="Pet photo">
-                <div class="diary-post-content">
-                    <h3 class="diary-post-title">Exercise Routine</h3>
-                    <p class="diary-post-time">Posted: November 22, 2025, 8:20 PM</p>
-                </div>
-            </article>
-
-            <!-- Post 5 -->
-            <article class="diary-post-card" onclick="viewPostDetail(event)">
-                <span class="delete-diary-icon" onclick="deleteDiaryPost(this)">❌</span>
-                <img src="../images/cat.webp" class="diary-post-photo" alt="Pet photo">
-                <div class="diary-post-content">
-                    <h3 class="diary-post-title">Morning Routine</h3>
-                    <p class="diary-post-time">Posted: November 21, 2025, 7:00 AM</p>
-                </div>
-            </article>
-
-            <!-- Post 6 -->
-            <article class="diary-post-card" onclick="viewPostDetail(event)">
-                <span class="delete-diary-icon" onclick="deleteDiaryPost(this)">❌</span>
-                <img src="../images/cat.webp" class="diary-post-photo" alt="Pet photo">
-                <div class="diary-post-content">
-                    <h3 class="diary-post-title">Lazy Sunday</h3>
-                    <p class="diary-post-time">Posted: November 20, 2025, 2:30 PM</p>
-                </div>
-            </article>
+            {% if posts %}
+                {% for post in posts %}
+                    <article class="diary-post-card"
+                             onclick="viewPostDetail(event, '{{ url_for('diary_detail', post_id=str(post._id)) }}')">
+                        <span class="delete-diary-icon" onclick="deleteDiaryPost(this, '{{ url_for('delete_diary_post', post_id=str(post._id)) }}')">❌</span>
+                        <img src="{{ post.photo_url or url_for('static', filename='images/cat.webp') }}"
+                             class="diary-post-photo" alt="Pet photo">
+                        <div class="diary-post-content">
+                            <h3 class="diary-post-title">{{ post.title }}</h3>
+                            <p class="diary-post-time">
+                                Posted:
+                                {% if post.created_at %}
+                                    {{ post.created_at.strftime("%B %d, %Y, %I:%M %p") }}
+                                {% else %}
+                                    Unknown time
+                                {% endif %}
+                            </p>
+                        </div>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <p>No diary posts yet. Click "Add Post" to write the first one.</p>
+            {% endif %}
 
         </div>
     </div>
@@ -99,7 +61,7 @@
         let deleteDiaryMode = false;
 
         function addNewPost() {
-            window.location.href = 'addPost.html';
+            window.location.href = '{{ url_for("add_diary_post", pet_id=str(pet._id)) }}';
         }
 
         function toggleDeleteMode() {
@@ -118,7 +80,7 @@
             }
         }
 
-        function deleteDiaryPost(icon) {
+        function deleteDiaryPost(icon, deleteUrl) {
             if (!deleteDiaryMode) return;
 
             if (confirm('Are you sure you want to delete this post?')) {
@@ -128,16 +90,25 @@
                 setTimeout(() => {
                     card.remove();
                 }, 300);
+
+                fetch(deleteUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
             }
         }
 
-        function viewPostDetail(event) {
-            // Don't navigate if clicking on delete icon
+        function viewPostDetail(event, detailUrl) {
             if (event.target.classList.contains('delete-diary-icon') ||
                 event.target.closest('.delete-diary-icon')) {
                 event.stopPropagation();
                 return;
             }
-            window.location.href = 'postDetail.html';
+            window.location.href = detailUrl;
         }
     </script>
+
+</body>
+</html>
