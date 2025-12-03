@@ -18,10 +18,12 @@ from bson.objectid import ObjectId
 from db import get_db
 
 
-app = Flask(__name__)
+app = Flask(__name__,
+            template_folder='../frontend/templates',
+            static_folder='../static')
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret")
 
-UPLOAD_FOLDER = os.path.join(app.root_path, "static", "uploads")
+UPLOAD_FOLDER = os.path.join(os.path.dirname(app.root_path), "static", "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
