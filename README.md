@@ -55,6 +55,10 @@ The application consists of two main subsystems:
    ```bash
    docker-compose up -d
    ```
+   or
+   ```bash
+   docker compose up -d
+   ```
 
 5. Access the application at `http://localhost:5000`
 
