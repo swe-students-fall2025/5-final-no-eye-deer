@@ -15,7 +15,7 @@ from flask import (
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 
-from db import get_db
+from .db import get_db
 
 
 app = Flask(__name__,
