@@ -26,9 +26,7 @@ The application consists of two main subsystems:
 
 ## Docker Images
 
-- **Web Backend**: [Docker Hub - pet-diary-backend](https://hub.docker.com/r/YOUR_DOCKER_USERNAME/pet-diary-backend)
-
-**Note**: Replace `YOUR_DOCKER_USERNAME` with your actual Docker Hub username. The image will be available at `https://hub.docker.com/r/YOUR_DOCKER_USERNAME/pet-diary-backend` after the first successful CI/CD run.
+- **Web Backend**: [Docker Hub - pet-diary-backend](https://hub.docker.com/r/lilyluo7412/pet-diary-backend)
 
 ## Prerequisites
 
