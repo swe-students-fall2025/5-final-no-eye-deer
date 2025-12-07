@@ -88,8 +88,8 @@ jobs:
           images: ${{ secrets.DOCKER_USERNAME }}/pet-diary-backend
           tags: |
             type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=${{ github.ref_name }}-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
       
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -105,6 +105,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    if: always()
     
     steps:
       - name: Deploy to Digital Ocean
