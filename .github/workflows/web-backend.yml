@@ -108,7 +108,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: always() && (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
+    if: needs.build-and-push.result == 'success' && (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
     
     steps:
       - name: Deploy to Digital Ocean
