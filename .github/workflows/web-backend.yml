@@ -108,7 +108,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: needs.build-and-push.result == 'success' && (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
+    if: always()
     
     steps:
       - name: Deploy to Digital Ocean
@@ -122,6 +122,18 @@ jobs:
           key: ${{ secrets.DO_SSH_KEY }}
           password: ${{ secrets.DO_PASSWORD }}
           script: |
+            # Only deploy on main/master push (PRs don't have secrets)
+            if [ "${{ github.event_name }}" != "push" ] || [ "${{ github.ref }}" != "refs/heads/main" ] && [ "${{ github.ref }}" != "refs/heads/master" ]; then
+              echo "Skipping deploy: not a push to main/master branch"
+              exit 0
+            fi
+            
+            # Check if build-and-push succeeded
+            if [ "${{ needs.build-and-push.result }}" != "success" ]; then
+              echo "Skipping deploy: build-and-push did not succeed"
+              exit 0
+            fi
+            
             # Login to Docker Hub
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             
