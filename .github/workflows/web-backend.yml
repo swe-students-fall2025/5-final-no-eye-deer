@@ -91,6 +91,9 @@ jobs:
             type=sha
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
       
+      - name: Debug tags
+        run: echo "tags=${{ steps.meta.outputs.tags }}"
+      
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -105,7 +108,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
     
     steps:
       - name: Deploy to Digital Ocean
@@ -122,8 +125,25 @@ jobs:
             # Login to Docker Hub
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             
-            # Pull latest image
-            docker pull ${{ secrets.DOCKER_USERNAME }}/pet-diary-backend:latest
+            # Wait a moment for image to be available
+            sleep 5
+            
+            # Pull latest image (with retry logic)
+            for i in 1 2 3; do
+              if docker pull ${{ secrets.DOCKER_USERNAME }}/pet-diary-backend:latest; then
+                echo "Successfully pulled image"
+                break
+              else
+                echo "Attempt $i failed, retrying in 10 seconds..."
+                sleep 10
+              fi
+            done
+            
+            # Verify image exists
+            if ! docker images | grep -q "${{ secrets.DOCKER_USERNAME }}/pet-diary-backend.*latest"; then
+              echo "Error: Image not found after pull attempts"
+              exit 1
+            fi
             
             # Stop and remove old container
             docker stop pet-diary-backend || true
