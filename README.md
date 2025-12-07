@@ -1,6 +1,6 @@
 # Pet Diary - Final Project
 
-[![CI/CD Status](https://github.com/swe-students-fall2025/5-final-no-eye-deer/actions/workflows/web-backend.yml/badge.svg)](https://github.com/swe-students-fall2025/5-final-no-eye-deer/actions/workflows/web-backend.yml)
+[![CI/CD Status](https://github.com/swe-students-fall2025/5-final-no-eye-deer/actions/workflows/web-backend.yml/badge.svg?branch=lily-docker-deploy-fixed)](https://github.com/swe-students-fall2025/5-final-no-eye-deer/actions/workflows/web-backend.yml)
 
 A web application for pet owners to manage their pets' information and create diary entries. This project demonstrates software development teamwork, database integration, containerization, and CI/CD pipelines.
 
