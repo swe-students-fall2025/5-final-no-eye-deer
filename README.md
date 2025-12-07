@@ -18,11 +18,17 @@ The application consists of two main subsystems:
 
 ## Team Members
 
-- [Your Name](https://github.com/YOUR_GITHUB_USERNAME) - Docker & Deployment
+- [Gavin Guo](https://github.com/GavinGuoSZ)
+- [Yilin Wu](https://github.com/YilinWu1028)
+- [Lily Luo](https://github.com/lilyluo7412)
+- [Mojin Yuan](https://github.com/Mojin-Yuan)
+- [Serena](https://github.com/serena0615)
 
 ## Docker Images
 
 - **Web Backend**: [Docker Hub - pet-diary-backend](https://hub.docker.com/r/YOUR_DOCKER_USERNAME/pet-diary-backend)
+
+**Note**: Replace `YOUR_DOCKER_USERNAME` with your actual Docker Hub username. The image will be available at `https://hub.docker.com/r/YOUR_DOCKER_USERNAME/pet-diary-backend` after the first successful CI/CD run.
 
 ## Prerequisites
 
