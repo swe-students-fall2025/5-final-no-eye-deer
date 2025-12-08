@@ -620,6 +620,76 @@ def test_export_pet_diary_pet_not_found(client, mock_db):
     assert '/profile' in resp.headers['Location']
 
 
+def test_save_reminders_not_logged_in(client, monkeypatch):
+    """If not loggin, should return 401 and error"""
+    monkeypatch.setattr(backend_app, "current_user", lambda: None)
+
+    pet_id = str(ObjectId())
+    resp = client.post(f"/pets/{pet_id}/reminders", json={"reminders": ["a", "b"]})
+
+    assert resp.status_code == 401
+    data = resp.get_json()
+    assert data["error"] == "Not logged in"
+
+
+def test_save_reminders_invalid_pet_id(client, mock_db, monkeypatch):
+    """If pet_id is not legal ObjectId, it should return 400"""
+    user = {"_id": ObjectId(), "username": "tester"}
+    monkeypatch.setattr(backend_app, "current_user", lambda: user)
+
+    bad_id = "not-a-valid-objectid"
+    resp = client.post(f"/pets/{bad_id}/reminders", json={"reminders": ["a"]})
+
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert "Invalid pet ID" in data["error"]
+
+
+def test_save_reminders_pet_not_found(client, mock_db, monkeypatch):
+    """If id is legal but cannot search from database, it should return 404"""
+    user = {"_id": ObjectId(), "username": "tester"}
+    monkeypatch.setattr(backend_app, "current_user", lambda: user)
+
+    pet_oid = ObjectId()
+    mock_db["pets"].find_one.return_value = None
+
+    resp = client.post(f"/pets/{pet_oid}/reminders", json={"reminders": ["a"]})
+
+    assert resp.status_code == 404
+    data = resp.get_json()
+    assert "Pet not found" in data["error"]
+
+
+def test_save_reminders_success(client, mock_db, monkeypatch):
+    """Good: Successfully save reminders, return success=True"""
+    user = {"_id": ObjectId(), "username": "tester"}
+    monkeypatch.setattr(backend_app, "current_user", lambda: user)
+
+    pet_oid = ObjectId()
+    mock_db["pets"].find_one.return_value = {
+        "_id": pet_oid,
+        "owner_id": user["_id"],
+        "name": "Buddy",
+        "pet_type": "dog",
+    }
+
+    mock_db["pets"].update_one = MagicMock()
+
+    reminders = ["Walk", "Feed"]
+    resp = client.post(
+        f"/pets/{pet_oid}/reminders",
+        json={"reminders": reminders},
+    )
+
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["success"] is True
+
+    mock_db["pets"].update_one.assert_called_once_with(
+        {"_id": pet_oid},
+        {"$set": {"reminders": reminders}},
+    )
+
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
