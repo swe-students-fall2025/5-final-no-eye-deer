@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
+import csv
+from io import StringIO
 
 
 from flask import (
@@ -11,6 +13,7 @@ from flask import (
     url_for,
     flash,
     session,
+    Response,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
@@ -499,6 +502,59 @@ def delete_diary_post(post_id):
         return redirect(url_for("pet_diary_list", pet_id=pet_id))
 
     return redirect(url_for("profile"))
+
+
+@app.route("/pets/<pet_id>/diary/export", methods=["GET"])
+def export_pet_diary(pet_id):
+    """Export diary to csv file"""
+    user = current_user()
+    if not user:
+        return redirect(url_for("index"))
+
+    try:
+        pet = pets.find_one({"_id": ObjectId(pet_id), "owner_id": user["_id"]})
+    except Exception:
+        pet = None
+
+    if not pet:
+        flash("Pet not found.")
+        return redirect(url_for("profile"))
+
+    pet_id_str = str(pet["_id"])
+    pet_name = pet.get("name", "")
+    pet_type = pet.get("pet_type", "")
+
+    cursor = diary_posts.find({"pet_id": pet_id_str}).sort("created_at", 1)
+
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Pet Name", "Pet Type", "Title", "Description", "Photo URL", "Created At"])
+
+    for post in cursor:
+        title = post.get("title", "")
+        description = post.get("description", "")
+        photo_url = post.get("photo_url", "")
+        created_at = post.get("created_at")
+        if isinstance(created_at, datetime):
+            created_str = created_at.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            created_str = str(created_at) if created_at is not None else ""
+
+        writer.writerow([pet_name, pet_type, title, description, photo_url, created_str])
+
+    csv_data = output.getvalue()
+    output.close()
+
+    filename = f"{pet_name}_diary_export.csv" if pet_name else "pet_diary_export.csv"
+
+    return Response(
+        csv_data,
+        mimetype="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        },
+    )
+
 
 
 if __name__ == "__main__":

@@ -26,6 +26,14 @@
                 Add Post
             </button>
             <button class="diary-action-btn delete" id="deleteDiaryBtn" onclick="toggleDeleteMode()">Delete</button>
+            <button class="diary-action-btn"
+                    onclick="window.location.href='{{ url_for('export_pet_diary', pet_id=str(pet._id)) }}'">
+                Export Diary
+            </button>
+            <button class="diary-action-btn"
+                    onclick="window.print()">
+                Print / Save as PDF
+            </button>
         </div>
 
         <div class="diary-grid" id="diaryGrid">

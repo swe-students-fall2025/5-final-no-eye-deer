@@ -1051,3 +1051,20 @@ select.field-input {
     flex: 0 1 auto;
     min-width: 150px;
 }
+
+@media print {
+    .navbar,
+    .diary-actions,
+    .back-btn {
+        display: none !important;
+    }
+
+    body {
+        background: #ffffff;
+    }
+
+    .diary-card {
+        page-break-inside: avoid;
+        margin-bottom: 16px;
+    }
+}
