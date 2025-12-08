@@ -252,6 +252,8 @@ select.field-input {
     border-radius: 6px;
     margin-right: 8px;
     font-size: 14px;
+    background: #e0e0e0;
+    display: inline-block;
 }
 
 .edit-pet-btn {
@@ -273,16 +275,24 @@ select.field-input {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.smart {
-    background: #F7E7A9;
+.pet-tags .tag.smart {
+    background: #F7E7A9 !important;
 }
 
-.shy {
-    background: #C1CFFB;
+.pet-tags .tag.shy {
+    background: #C1CFFB !important;
 }
 
-.foodie {
-    background: #C4EBC6;
+.pet-tags .tag.foodie {
+    background: #C4EBC6 !important;
+}
+
+.pet-tags .tag.playful {
+    background: #FFD4E5 !important;
+}
+
+.pet-tags .tag.friendly {
+    background: #B8E6D5 !important;
 }
 
 /* REMINDER */

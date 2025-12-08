@@ -25,47 +25,45 @@
             <form action="{{ url_for('edit_profile') }}" method="post" enctype="multipart/form-data">
                 <div class="profile-picture-section">
                     <img src="{{ user.avatar_url or url_for('static', filename='images/login.png') }}"
-                         class="edit-avatar" id="profile-preview" alt="user avatar">
+                        class="edit-avatar" id="profile-preview" alt="user avatar">
                     <input type="file" id="profile-upload" name="avatar" accept="image/*" style="display: none;"
-                           onchange="previewImage(event, 'profile-preview')">
+                        onchange="previewImage(event, 'profile-preview')">
                     <button type="button" class="upload-btn"
-                            onclick="document.getElementById('profile-upload').click()">Browse & Upload Photo</button>
+                        onclick="document.getElementById('profile-upload').click()">Browse & Upload Photo</button>
                 </div>
 
                 <div class="field-group">
                     <label class="field-label" for="username">Username</label>
-                    <input class="field-input" id="username" name="username" type="text"
-                           value="{{ user.username }}">
+                    <input class="field-input" id="username" name="username" type="text" value="{{ user.username }}">
                 </div>
 
                 <div class="field-group">
                     <label class="field-label" for="email">Email</label>
-                    <input class="field-input" id="email" name="email" type="email"
-                           value="{{ user.email }}">
+                    <input class="field-input" id="email" name="email" type="email" value="{{ user.email }}">
                 </div>
 
                 <div class="field-group">
                     <label class="field-label" for="fullname">Full Name</label>
                     <input class="field-input" id="fullname" name="full_name" type="text"
-                           value="{{ user.full_name or '' }}" placeholder="Enter your full name">
+                        value="{{ user.full_name or '' }}" placeholder="Enter your full name">
                 </div>
 
                 <div class="field-group">
                     <label class="field-label" for="phone">Phone Number</label>
-                    <input class="field-input" id="phone" name="phone" type="tel"
-                           value="{{ user.phone or '' }}" placeholder="Enter your phone number">
+                    <input class="field-input" id="phone" name="phone" type="tel" value="{{ user.phone or '' }}"
+                        placeholder="Enter your phone number">
                 </div>
 
                 <div class="field-group">
                     <label class="field-label" for="bio">Bio</label>
                     <textarea class="field-textarea" id="bio" name="bio" rows="4"
-                              placeholder="Tell us about yourself and your pets...">{{ user.bio or '' }}</textarea>
+                        placeholder="Tell us about yourself and your pets...">{{ user.bio or '' }}</textarea>
                 </div>
 
                 <div class="edit-profile-actions">
                     <button type="submit" class="profile-btn">Save Changes</button>
                     <button type="button" class="profile-btn secondary"
-                            onclick="window.location.href='{{ url_for('profile') }}'">Cancel</button>
+                        onclick="window.location.href='{{ url_for('profile') }}'">Cancel</button>
                 </div>
             </form>
         </section>

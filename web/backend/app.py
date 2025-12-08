@@ -11,6 +11,7 @@ from flask import (
     url_for,
     flash,
     session,
+    jsonify,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
@@ -153,12 +154,16 @@ def edit_profile():
 
     bio = request.form.get("bio", "")
     username = request.form.get("username", "").strip() or user["username"]
+    phone_number = request.form.get("phone", "").strip()
+    full_name = request.form.get("full_name", "").strip()
     avatar_file = request.files.get("avatar")
     avatar_url = save_image(avatar_file)
 
     update = {
         "bio": bio,
         "username": username,
+        "phone_number": phone_number,
+        "full_name": full_name,
     }
     if avatar_url:
         update["avatar_url"] = avatar_url
@@ -305,43 +310,46 @@ def pet_detail(pet_id):
     elif pet_type == "bird":
         template_name = "birdpet.html"
 
-    base_reminders = []
-    if pet_type == "dog":
-        base_reminders = [
-            "Morning walk",
-            "Refill water bowl",
-            "Give flea medication",
-            "Schedule vet checkup",
-        ]
-    elif pet_type == "cat":
-        base_reminders = [
-            "Scoop the litter box",
-            "Get cat treats",
-            "Clean the ears",
-            "Give flea/tick treatment",
-        ]
-    elif pet_type == "rabbit":
-        base_reminders = [
-            "Clean cage",
-            "Refill hay",
-            "Trim nails",
-            "Check teeth",
-        ]
-    elif pet_type == "bird":
-        base_reminders = [
-            "Clean cage",
-            "Refresh seeds and water",
-            "Spray bath",
-            "Check feathers",
-        ]
-    elif pet_type == "hamster":
-        base_reminders = [
-            "Clean cage",
-            "Refill food bowl",
-            "Change bedding",
-        ]
-
-    reminders = [{"text": text} for text in base_reminders]
+    # Get reminders from database, or use default ones if not set
+    if "reminders" in pet and pet["reminders"]:
+        reminders = pet["reminders"]
+    else:
+        base_reminders = []
+        if pet_type == "dog":
+            base_reminders = [
+                "Morning walk",
+                "Refill water bowl",
+                "Give flea medication",
+                "Schedule vet checkup",
+            ]
+        elif pet_type == "cat":
+            base_reminders = [
+                "Scoop the litter box",
+                "Get cat treats",
+                "Clean the ears",
+                "Give flea/tick treatment",
+            ]
+        elif pet_type == "rabbit":
+            base_reminders = [
+                "Clean cage",
+                "Refill hay",
+                "Trim nails",
+                "Check teeth",
+            ]
+        elif pet_type == "bird":
+            base_reminders = [
+                "Clean cage",
+                "Refresh seeds and water",
+                "Spray bath",
+                "Check feathers",
+            ]
+        elif pet_type == "hamster":
+            base_reminders = [
+                "Clean cage",
+                "Refill food bowl",
+                "Change bedding",
+            ]
+        reminders = [{"text": text} for text in base_reminders]
 
     ctx = {"pet": pet, "pet_id": pet_id, "reminders": reminders}
 
@@ -353,6 +361,32 @@ def pet_detail(pet_id):
         ctx["fact_text"] = fact_text
 
     return render_template(template_name, **ctx)
+
+
+@app.route("/pets/<pet_id>/reminders", methods=["POST"])
+def save_reminders(pet_id):
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Not logged in"}), 401
+
+    try:
+        pet_oid = ObjectId(pet_id)
+    except:
+        return jsonify({"error": "Invalid pet ID"}), 400
+
+    pet = pets.find_one({"_id": pet_oid, "owner_id": user["_id"]})
+    if not pet:
+        return jsonify({"error": "Pet not found"}), 404
+
+    data = request.get_json()
+    reminders_list = data.get("reminders", [])
+
+    pets.update_one(
+        {"_id": pet_oid},
+        {"$set": {"reminders": reminders_list}}
+    )
+
+    return jsonify({"success": True})
 
 
 @app.route("/pets/<pet_id>/diary", methods=["GET"])

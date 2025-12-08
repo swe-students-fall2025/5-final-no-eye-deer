@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,148 +9,168 @@
 </head>
 
 <body class="pattern-bg">
-<header class="navbar">
-    <div class="nav-group">
-        <span class="logo">Apawtment</span>
-        <a href="{{ url_for('profile') }}">Profile</a>
-    </div>
-</header>
+    <header class="navbar">
+        <div class="nav-group">
+            <span class="logo">Apawtment</span>
+            <a href="{{ url_for('profile') }}">Profile</a>
+        </div>
+    </header>
 
-<div class="mypet-wrapper">
+    <div class="mypet-wrapper">
 
-    <section class="pet-card">
-        <img src="{{ pet.photo_url or url_for('static', filename='images/cat.webp') }}"
-             class="pet-photo" alt="pet">
+        <section class="pet-card">
+            <img src="{{ pet.photo_url or url_for('static', filename='images/cat.webp') }}" class="pet-photo" alt="pet">
 
-        <div class="pet-info">
-            <h2 class="pet-name">{{ pet.name }}</h2>
+            <div class="pet-info">
+                <h2 class="pet-name">{{ pet.name }}</h2>
 
-            <p>
-                Age : {{ pet.age }} year{% if pet.age != 1 %}s{% endif %} old<br>
-                {% if pet.weight %}
+                <p>
+                    Age : {{ pet.age }} year{% if pet.age != 1 %}s{% endif %} old<br>
+                    {% if pet.weight %}
                     Weight : {{ pet.weight }} lb
-                {% endif %}
-            </p>
+                    {% endif %}
+                </p>
 
-            <div class="pet-tags">
-                {% if pet.tags %}
+                <div class="pet-tags">
+                    {% if pet.tags %}
                     {% for tag in pet.tags %}
-                        <span class="tag {{ tag|lower }}">{{ tag }}</span>
+                    <span class="tag {{ tag|lower }}">{{ tag }}</span>
                     {% endfor %}
-                {% endif %}
+                    {% endif %}
+                </div>
+
+                <button class="edit-pet-btn" onclick="window.location.href='{{ url_for('edit_pet', pet_id=pet_id) }}'">
+                    Edit Pet Info
+                </button>
             </div>
+        </section>
 
-            <button class="edit-pet-btn"
-                    onclick="window.location.href='{{ url_for('edit_pet', pet_id=pet_id) }}'">
-                Edit Pet Info
-            </button>
-        </div>
-    </section>
+        <section class="reminder-card">
+            <h3>Reminders</h3>
 
-    <section class="reminder-card">
-        <h3>Reminders</h3>
+            <ul class="reminder-list" id="reminderList">
+                {% for r in reminders %}
+                <li class="reminder-item">
+                    <input type="checkbox" id="reminder{{ loop.index }}" class="reminder-checkbox" {% if r.checked
+                        %}checked{% endif %} onchange="saveRemindersToServer()">
+                    <label for="reminder{{ loop.index }}">{{ r.text }}</label>
+                    <span class="delete-reminder-icon" onclick="deleteReminder(this)">❌</span>
+                </li>
+                {% endfor %}
+            </ul>
 
-        <ul class="reminder-list" id="reminderList">
-            {% for r in reminders %}
-            <li class="reminder-item">
-                <input type="checkbox"
-                       id="reminder{{ loop.index }}"
-                       class="reminder-checkbox">
-                <label for="reminder{{ loop.index }}">{{ r.text }}</label>
-                <span class="delete-reminder-icon" onclick="deleteReminder(this)">❌</span>
-            </li>
-            {% endfor %}
-        </ul>
+            <div class="reminder-actions">
+                <button class="reminder-btn add" onclick="addNewReminder()">Add New</button>
+                <button class="reminder-btn delete" id="deleteBtn" onclick="toggleDeleteMode()">Delete</button>
+            </div>
+        </section>
 
-        <div class="reminder-actions">
-            <button class="reminder-btn add" onclick="addNewReminder()">Add New</button>
-            <button class="reminder-btn delete" id="deleteBtn" onclick="toggleDeleteMode()">Delete</button>
-        </div>
-    </section>
-
-    <section class="fact-card">
-        <button class="diary-title-btn"
+        <section class="fact-card">
+            <button class="diary-title-btn"
                 onclick="window.location.href='{{ url_for('pet_diary_list', pet_id=pet_id) }}'">
-            Pet's Diary
-        </button>
-        <p class="fact-text">
-            Did you know? Cats have a unique reflective layer behind their retinas
-            called the tapetum lucidum. It helps them see in very low
-            light — giving them up to six times better night vision
-            than humans!
-        </p>
-        <img src="{{ url_for('static', filename='images/did-you-know.png') }}" class="fact-img" alt="fact">
-    </section>
+                Pet's Diary
+            </button>
+            <p class="fact-text">
+                Did you know? Cats have a unique reflective layer behind their retinas
+                called the tapetum lucidum. It helps them see in very low
+                light — giving them up to six times better night vision
+                than humans!
+            </p>
+            <img src="{{ url_for('static', filename='images/did-you-know.png') }}" class="fact-img" alt="fact">
+        </section>
 
-</div>
+    </div>
 
-<script>
-    let reminderCount = {{ reminders|length }};
-    let deleteModeActive = false;
+    <script>
+        let reminderCount = {{ reminders| length }};
+        let deleteModeActive = false;
+        const petId = "{{ pet_id }}";
 
-    function addNewReminder() {
-        const reminderText = prompt("Enter new reminder:");
-        if (reminderText && reminderText.trim() !== "") {
-            reminderCount++;
-            const reminderList = document.getElementById('reminderList');
-            const newReminder = document.createElement('li');
-            newReminder.className = 'reminder-item';
-            newReminder.innerHTML = `
-                <input type="checkbox" id="reminder${reminderCount}" class="reminder-checkbox">
+        function saveRemindersToServer() {
+            const reminderItems = document.querySelectorAll('.reminder-item');
+            const reminders = Array.from(reminderItems).map(item => {
+                const checkbox = item.querySelector('.reminder-checkbox');
+                const label = item.querySelector('label');
+                return {
+                    text: label.textContent,
+                    checked: checkbox.checked
+                };
+            });
+
+            fetch(`/pets/${petId}/reminders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ reminders: reminders })
+            }).catch(err => console.error('Failed to save reminders:', err));
+        } function addNewReminder() {
+            const reminderText = prompt("Enter new reminder:");
+            if (reminderText && reminderText.trim() !== "") {
+                reminderCount++;
+                const reminderList = document.getElementById('reminderList');
+                const newReminder = document.createElement('li');
+                newReminder.className = 'reminder-item';
+                newReminder.innerHTML = `
+                <input type="checkbox" id="reminder${reminderCount}" class="reminder-checkbox" onchange="saveRemindersToServer()">
                 <label for="reminder${reminderCount}">${reminderText.trim()}</label>
                 <span class="delete-reminder-icon" onclick="deleteReminder(this)">❌</span>
             `;
-            reminderList.appendChild(newReminder);
+                reminderList.appendChild(newReminder);
 
-            newReminder.style.opacity = '0';
-            newReminder.style.transform = 'translateX(-20px)';
-            setTimeout(() => {
-                newReminder.style.transition = 'all 0.3s ease';
-                newReminder.style.opacity = '1';
-                newReminder.style.transform = 'translateX(0)';
-            }, 10);
+                newReminder.style.opacity = '0';
+                newReminder.style.transform = 'translateX(-20px)';
+                setTimeout(() => {
+                    newReminder.style.transition = 'all 0.3s ease';
+                    newReminder.style.opacity = '1';
+                    newReminder.style.transform = 'translateX(0)';
+                }, 10);
+
+                saveRemindersToServer();
+            }
         }
-    }
 
-    function toggleDeleteMode() {
-        deleteModeActive = !deleteModeActive;
-        const reminderItems = document.querySelectorAll('.reminder-item');
-        const deleteBtn = document.getElementById('deleteBtn');
+        function toggleDeleteMode() {
+            deleteModeActive = !deleteModeActive;
+            const reminderItems = document.querySelectorAll('.reminder-item');
+            const deleteBtn = document.getElementById('deleteBtn');
 
-        if (deleteModeActive) {
-            reminderItems.forEach(item => item.classList.add('delete-mode'));
-            deleteBtn.innerHTML = '✓ Done';
-            deleteBtn.style.background = '#c08a1a';
-        } else {
-            reminderItems.forEach(item => item.classList.remove('delete-mode'));
-            deleteBtn.innerHTML = 'Delete';
-            deleteBtn.style.background = '#f5c0c0';
+            if (deleteModeActive) {
+                reminderItems.forEach(item => item.classList.add('delete-mode'));
+                deleteBtn.innerHTML = '✓ Done';
+                deleteBtn.style.background = '#c08a1a';
+            } else {
+                reminderItems.forEach(item => item.classList.remove('delete-mode'));
+                deleteBtn.innerHTML = 'Delete';
+                deleteBtn.style.background = '#f5c0c0';
+            }
         }
-    }
 
-    function deleteReminder(element) {
-        if (!deleteModeActive) return;
+        function deleteReminder(element) {
+            if (!deleteModeActive) return;
 
-        const reminderItem = element.closest('.reminder-item');
-        const reminderText = reminderItem.querySelector('label').textContent;
+            const reminderItem = element.closest('.reminder-item');
+            const reminderText = reminderItem.querySelector('label').textContent;
 
-        if (confirm(`Delete reminder: "${reminderText}"?`)) {
-            reminderItem.style.transition = 'all 0.3s ease';
-            reminderItem.style.opacity = '0';
-            reminderItem.style.transform = 'translateX(-20px)';
+            if (confirm(`Delete reminder: "${reminderText}"?`)) {
+                reminderItem.style.transition = 'all 0.3s ease';
+                reminderItem.style.opacity = '0';
+                reminderItem.style.transform = 'translateX(-20px)';
 
-            setTimeout(() => {
-                reminderItem.remove();
-                const remainingReminders = document.querySelectorAll('.reminder-item').length;
-                if (remainingReminders === 0) {
-                    document.getElementById('reminderList').innerHTML =
-                        '<p style="text-align: center; color: #666; padding: 20px;">No reminders yet. Add your first reminder!</p>';
-                    toggleDeleteMode();
-                }
-            }, 300);
+                setTimeout(() => {
+                    reminderItem.remove();
+                    const remainingReminders = document.querySelectorAll('.reminder-item').length;
+                    if (remainingReminders === 0) {
+                        document.getElementById('reminderList').innerHTML =
+                            '<p style="text-align: center; color: #666; padding: 20px;">No reminders yet. Add your first reminder!</p>';
+                        toggleDeleteMode();
+                    }
+                    saveRemindersToServer();
+                }, 300);
+            }
         }
-    }
-</script>
+    </script>
 
 </body>
+
 </html>
