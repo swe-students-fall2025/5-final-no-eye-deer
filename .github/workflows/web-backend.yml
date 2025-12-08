@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [main, master]
     types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:  # Allow manual triggering
 
 jobs:
   build-and-test:
@@ -66,7 +67,6 @@ jobs:
   build-and-push:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     
     steps:
       - name: Checkout code
@@ -88,8 +88,11 @@ jobs:
           images: ${{ secrets.DOCKER_USERNAME }}/pet-diary-backend
           tags: |
             type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+      
+      - name: Debug tags
+        run: echo "tags=${{ steps.meta.outputs.tags }}"
       
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -105,7 +108,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: always()
     
     steps:
       - name: Deploy to Digital Ocean
@@ -113,20 +116,46 @@ jobs:
         with:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USERNAME }}
-          # Authentication: Use SSH key if available, otherwise use password
-          # Option 1: SSH Key (recommended, more secure)
-          #   - Set DO_SSH_KEY secret with your private SSH key
-          # Option 2: Password (simpler, faster setup)
-          #   - Set DO_PASSWORD secret with your Droplet password
-          #   - Leave DO_SSH_KEY empty or unset
+          # Authentication: Use password (DO_SSH_KEY is optional, leave empty if using password)
+          # If using password: Set DO_PASSWORD secret, leave DO_SSH_KEY empty
+          # If using SSH key: Set DO_SSH_KEY secret, leave DO_PASSWORD empty
           key: ${{ secrets.DO_SSH_KEY }}
           password: ${{ secrets.DO_PASSWORD }}
           script: |
+            # Only deploy on main/master push (PRs don't have secrets)
+            if [ "${{ github.event_name }}" != "push" ] || [ "${{ github.ref }}" != "refs/heads/main" ] && [ "${{ github.ref }}" != "refs/heads/master" ]; then
+              echo "Skipping deploy: not a push to main/master branch"
+              exit 0
+            fi
+            
+            # Check if build-and-push succeeded
+            if [ "${{ needs.build-and-push.result }}" != "success" ]; then
+              echo "Skipping deploy: build-and-push did not succeed"
+              exit 0
+            fi
+            
             # Login to Docker Hub
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             
-            # Pull latest image
-            docker pull ${{ secrets.DOCKER_USERNAME }}/pet-diary-backend:latest
+            # Wait a moment for image to be available
+            sleep 5
+            
+            # Pull latest image (with retry logic)
+            for i in 1 2 3; do
+              if docker pull ${{ secrets.DOCKER_USERNAME }}/pet-diary-backend:latest; then
+                echo "Successfully pulled image"
+                break
+              else
+                echo "Attempt $i failed, retrying in 10 seconds..."
+                sleep 10
+              fi
+            done
+            
+            # Verify image exists
+            if ! docker images | grep -q "${{ secrets.DOCKER_USERNAME }}/pet-diary-backend.*latest"; then
+              echo "Error: Image not found after pull attempts"
+              exit 1
+            fi
             
             # Stop and remove old container
             docker stop pet-diary-backend || true

@@ -1,6 +1,6 @@
 # Pet Diary - Final Project
 
-[![CI/CD Status](https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/actions/workflows/web-backend.yml/badge.svg)](https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/actions/workflows/web-backend.yml)
+[![CI/CD Status](https://github.com/swe-students-fall2025/5-final-no-eye-deer/actions/workflows/web-backend.yml/badge.svg)](https://github.com/swe-students-fall2025/5-final-no-eye-deer/actions/workflows/web-backend.yml)
 
 A web application for pet owners to manage their pets' information and create diary entries. This project demonstrates software development teamwork, database integration, containerization, and CI/CD pipelines.
 
@@ -18,11 +18,15 @@ The application consists of two main subsystems:
 
 ## Team Members
 
-- [Your Name](https://github.com/YOUR_GITHUB_USERNAME) - Docker & Deployment
+- [Gavin Guo](https://github.com/GavinGuoSZ)
+- [Yilin Wu](https://github.com/YilinWu1028)
+- [Lily Luo](https://github.com/lilyluo7412)
+- [Mojin Yuan](https://github.com/Mojin-Yuan)
+- [Serena](https://github.com/serena0615)
 
 ## Docker Images
 
-- **Web Backend**: [Docker Hub - pet-diary-backend](https://hub.docker.com/r/YOUR_DOCKER_USERNAME/pet-diary-backend)
+- **Web Backend**: [Docker Hub - pet-diary-backend](https://hub.docker.com/r/lilyluo7412/pet-diary-backend)
 
 ## Prerequisites
 

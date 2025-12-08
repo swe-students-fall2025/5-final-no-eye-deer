@@ -252,6 +252,8 @@ select.field-input {
     border-radius: 6px;
     margin-right: 8px;
     font-size: 14px;
+    background: #e0e0e0;
+    display: inline-block;
 }
 
 .edit-pet-btn {
@@ -273,16 +275,24 @@ select.field-input {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.smart {
-    background: #F7E7A9;
+.pet-tags .tag.smart {
+    background: #F7E7A9 !important;
 }
 
-.shy {
-    background: #C1CFFB;
+.pet-tags .tag.shy {
+    background: #C1CFFB !important;
 }
 
-.foodie {
-    background: #C4EBC6;
+.pet-tags .tag.foodie {
+    background: #C4EBC6 !important;
+}
+
+.pet-tags .tag.playful {
+    background: #FFD4E5 !important;
+}
+
+.pet-tags .tag.friendly {
+    background: #B8E6D5 !important;
 }
 
 /* REMINDER */
@@ -1051,6 +1061,110 @@ select.field-input {
     flex: 0 1 auto;
     min-width: 150px;
 }
+
+/* --- Shared Modal Background --- */
+.custom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 1000;
+}
+
+.custom-modal.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* --- Modal Box --- */
+.custom-modal-content {
+    background: #fdf0e1;
+    padding: 22px 26px;
+    width: 85%;
+    max-width: 340px;
+    border-radius: 14px;
+    text-align: center;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.18);
+    animation: modalPop 0.25s ease;
+}
+
+@keyframes modalPop {
+    from { transform: scale(0.92); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* --- Modal Title --- */
+.modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    color: #333;
+}
+
+/* --- Text Input (Add Reminder) --- */
+.modal-input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    margin-bottom: 18px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+/* --- Buttons Group --- */
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* --- Buttons --- */
+.modal-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    border: none;
+    transition: 0.2s;
+}
+
+.modal-btn.cancel {
+    background: #eaeaea;
+}
+
+.modal-btn.cancel:hover {
+    background: #d5d5d5;
+}
+
+.modal-btn.ok {
+    background: #ffb74d;
+    color: #fff;
+}
+
+.modal-btn.ok:hover {
+    background: #ffa726;
+}
+
+/* --- Delete Modal Special Button (Red) --- */
+.modal-btn.delete {
+    background: #e57373;
+    color: white;
+}
+
+.modal-btn.delete:hover {
+    background: #ef5350;
+}
+
 
 @media print {
     .navbar,

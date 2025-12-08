@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,94 +9,135 @@
 </head>
 
 <body class="pattern-bg">
-<header class="navbar">
-    <div class="nav-group">
-        <span class="logo">Apawtment</span>
-        <a href="{{ url_for('profile') }}">Profile</a>
-    </div>
-</header>
+    <header class="navbar">
+        <div class="nav-group">
+            <span class="logo">Apawtment</span>
+            <a href="{{ url_for('profile') }}">Profile</a>
+        </div>
+    </header>
 
-<div class="mypet-wrapper">
+    <div class="mypet-wrapper">
 
-    <section class="pet-card">
-        <img src="{{ pet.photo_url or url_for('static', filename='images/dog.jpg') }}"
-             class="pet-photo" alt="pet">
+        <!-- PET CARD -->
+        <section class="pet-card">
+            <img src="{{ pet.photo_url or url_for('static', filename='images/dog.jpg') }}" class="pet-photo" alt="pet">
 
-        <div class="pet-info">
-            <h2 class="pet-name">{{ pet.name }}</h2>
+            <div class="pet-info">
+                <h2 class="pet-name">{{ pet.name }}</h2>
 
-            <p>
-                Age : {{ pet.age }} year{% if pet.age != 1 %}s{% endif %} old<br>
-                {% if pet.weight %}
+                <p>
+                    Age : {{ pet.age }} year{% if pet.age != 1 %}s{% endif %} old<br>
+                    {% if pet.weight %}
                     Weight : {{ pet.weight }} lb
-                {% endif %}
-            </p>
+                    {% endif %}
+                </p>
 
-            <div class="pet-tags">
-                {% if pet.tags %}
+                <div class="pet-tags">
+                    {% if pet.tags %}
                     {% for tag in pet.tags %}
-                        <span class="tag {{ tag|lower }}">{{ tag|capitalize }}</span>
+                    <span class="tag {{ tag|lower }}">{{ tag|capitalize }}</span>
                     {% endfor %}
-                {% endif %}
+                    {% endif %}
+                </div>
+
+                <button class="edit-pet-btn" onclick="window.location.href='{{ url_for('edit_pet', pet_id=pet_id) }}'">
+                    Edit Pet Info
+                </button>
             </div>
+        </section>
 
-            <button class="edit-pet-btn"
-                    onclick="window.location.href='{{ url_for('edit_pet', pet_id=pet_id) }}'">
-                Edit Pet Info
-            </button>
-        </div>
-    </section>
+        <!-- REMINDER CARD -->
+        <section class="reminder-card">
+            <h3>Reminders</h3>
 
-    <section class="reminder-card">
-        <h3>Reminders</h3>
+            <ul class="reminder-list" id="reminderList">
+                {% for r in reminders %}
+                <li class="reminder-item">
+                    <input type="checkbox" id="reminder{{ loop.index }}" class="reminder-checkbox"
+                        {% if r.checked %}checked{% endif %}
+                        onchange="saveRemindersToServer()">
+                    <label for="reminder{{ loop.index }}">{{ r.text }}</label>
+                    <span class="delete-reminder-icon" onclick="openDeleteModal(this)">❌</span>
+                </li>
+                {% endfor %}
+            </ul>
 
-        <ul class="reminder-list" id="reminderList">
-            {% for r in reminders %}
-            <li class="reminder-item">
-                <input type="checkbox"
-                       id="reminder{{ loop.index }}"
-                       class="reminder-checkbox">
-                <label for="reminder{{ loop.index }}">{{ r.text }}</label>
-                <span class="delete-reminder-icon" onclick="deleteReminder(this)">❌</span>
-            </li>
-            {% endfor %}
-        </ul>
+            <div class="reminder-actions">
+                <button class="reminder-btn add" onclick="openAddModal()">Add New</button>
+                <button class="reminder-btn delete" id="deleteBtn" onclick="toggleDeleteMode()">Delete</button>
+            </div>
+        </section>
 
-        <div class="reminder-actions">
-            <button class="reminder-btn add" onclick="addNewReminder()">Add New</button>
-            <button class="reminder-btn delete" id="deleteBtn" onclick="toggleDeleteMode()">Delete</button>
-        </div>
-    </section>
-
-    <section class="fact-card">
-        <button class="diary-title-btn"
+        <!-- FACT CARD -->
+        <section class="fact-card">
+            <button class="diary-title-btn"
                 onclick="window.location.href='{{ url_for('pet_diary_list', pet_id=pet_id) }}'">
-            Pet's Diary
-        </button>
-        <p class="fact-text">
-            {{ pet.fact or "Did you know? Dogs have a sense of time and can distinguish between one hour and five hours. They can even be trained to predict future events based on past experiences!" }}
-        </p>
-        <img src="{{ url_for('static', filename='images/did-you-know.png') }}" class="fact-img" alt="fun fact">
-    </section>
+                Pet's Diary
+            </button>
+            <p class="fact-text">
+                {{ pet.fact or "Did you know? Dogs have a sense of time and can distinguish between one hour and five hours?" }}
+            </p>
+            <img src="{{ url_for('static', filename='images/did-you-know.png') }}" class="fact-img" alt="fun fact">
+        </section>
 
-</div>
+    </div>
 
-<script>
-    let reminderCount = {{ reminders|length }};
-    let deleteModeActive = false;
 
-    function addNewReminder() {
-        const reminderText = prompt("Enter new reminder:");
-        if (reminderText && reminderText.trim() !== "") {
+    <!-- ===================== SCRIPTS ====================== -->
+
+    <script>
+        let reminderCount = {{ reminders| length }};
+        let deleteModeActive = false;
+        let reminderToDelete = null; 
+        const petId = "{{ pet_id }}";
+
+        /* SAVE REMINDERS */
+        function saveRemindersToServer() {
+            const reminderItems = document.querySelectorAll('.reminder-item');
+            const reminders = Array.from(reminderItems).map(item => {
+                return {
+                    text: item.querySelector('label').textContent,
+                    checked: item.querySelector('.reminder-checkbox').checked
+                };
+            });
+
+            fetch(`/pets/${petId}/reminders`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reminders })
+            }).catch(err => console.error(err));
+        }
+
+
+        /* -------- ADD REMINDER (Modal) -------- */
+
+        function openAddModal() {
+            document.getElementById("addModal").classList.add("active");
+            document.getElementById("modalInput").value = "";
+        }
+
+        function closeAddModal() {
+            document.getElementById("addModal").classList.remove("active");
+        }
+
+        function submitAddModal() {
+            const text = document.getElementById("modalInput").value.trim();
+            if (text !== "") addReminder(text);
+            closeAddModal();
+        }
+
+        function addReminder(text) {
             reminderCount++;
             const reminderList = document.getElementById('reminderList');
+
             const newReminder = document.createElement('li');
             newReminder.className = 'reminder-item';
             newReminder.innerHTML = `
-                <input type="checkbox" id="reminder${reminderCount}" class="reminder-checkbox">
-                <label for="reminder${reminderCount}">${reminderText.trim()}</label>
-                <span class="delete-reminder-icon" onclick="deleteReminder(this)">❌</span>
+                <input type="checkbox" id="reminder${reminderCount}" class="reminder-checkbox" onchange="saveRemindersToServer()">
+                <label for="reminder${reminderCount}">${text}</label>
+                <span class="delete-reminder-icon" onclick="openDeleteModal(this)">❌</span>
             `;
+
             reminderList.appendChild(newReminder);
 
             newReminder.style.opacity = '0';
@@ -105,48 +147,89 @@
                 newReminder.style.opacity = '1';
                 newReminder.style.transform = 'translateX(0)';
             }, 10);
+
+            saveRemindersToServer();
         }
-    }
 
-    function toggleDeleteMode() {
-        deleteModeActive = !deleteModeActive;
-        const reminderItems = document.querySelectorAll('.reminder-item');
-        const deleteBtn = document.getElementById('deleteBtn');
 
-        if (deleteModeActive) {
-            reminderItems.forEach(item => item.classList.add('delete-mode'));
-            deleteBtn.innerHTML = '✓ Done';
-            deleteBtn.style.background = '#c08a1a';
-        } else {
-            reminderItems.forEach(item => item.classList.remove('delete-mode'));
-            deleteBtn.innerHTML = 'Delete';
-            deleteBtn.style.background = '#f5c0c0';
+        /* -------- DELETE REMINDER (Modal) -------- */
+
+        function openDeleteModal(element) {
+            if (!deleteModeActive) return;
+            reminderToDelete = element.closest('.reminder-item');
+            const text = reminderToDelete.querySelector("label").textContent;
+            document.getElementById("deleteModalText").innerText = `Delete reminder: "${text}"?`;
+            document.getElementById("deleteModal").classList.add("active");
         }
-    }
 
-    function deleteReminder(element) {
-        if (!deleteModeActive) return;
+        function closeDeleteModal() {
+            reminderToDelete = null;
+            document.getElementById("deleteModal").classList.remove("active");
+        }
 
-        const reminderItem = element.closest('.reminder-item');
-        const reminderText = reminderItem.querySelector('label').textContent;
+        function confirmDelete() {
+            if (!reminderToDelete) return;
 
-        if (confirm(`Delete reminder: "${reminderText}"?`)) {
-            reminderItem.style.transition = 'all 0.3s ease';
-            reminderItem.style.opacity = '0';
-            reminderItem.style.transform = 'translateX(-20px)';
+            const item = reminderToDelete;
+
+            item.style.transition = 'all 0.3s ease';
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(-20px)';
 
             setTimeout(() => {
-                reminderItem.remove();
-                const remainingReminders = document.querySelectorAll('.reminder-item').length;
-                if (remainingReminders === 0) {
-                    document.getElementById('reminderList').innerHTML =
-                        '<p style="text-align: center; color: #666; padding: 20px;">No reminders yet. Add your first reminder!</p>';
-                    toggleDeleteMode();
-                }
+                item.remove();
+                saveRemindersToServer();
             }, 300);
+
+            closeDeleteModal();
         }
-    }
-</script>
+
+
+        /* DELETE MODE TOGGLE */
+
+        function toggleDeleteMode() {
+            deleteModeActive = !deleteModeActive;
+            const deleteBtn = document.getElementById('deleteBtn');
+            const items = document.querySelectorAll('.reminder-item');
+
+            if (deleteModeActive) {
+                items.forEach(i => i.classList.add("delete-mode"));
+                deleteBtn.innerHTML = "✓ Done";
+                deleteBtn.style.background = "#c08a1a";
+            } else {
+                items.forEach(i => i.classList.remove("delete-mode"));
+                deleteBtn.innerHTML = "Delete";
+                deleteBtn.style.background = "#f5c0c0";
+            }
+        }
+    </script>
+
+
+    <!-- ===================== MODALS ====================== -->
+
+    <!-- Add Reminder Modal -->
+    <div id="addModal" class="custom-modal">
+        <div class="custom-modal-content">
+            <div class="modal-title">Enter New Reminder:</div>
+            <input type="text" id="modalInput" class="modal-input">
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeAddModal()">Cancel</button>
+                <button class="modal-btn ok" onclick="submitAddModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Reminder Modal -->
+    <div id="deleteModal" class="custom-modal">
+        <div class="custom-modal-content">
+            <div class="modal-title" id="deleteModalText">Delete reminder?</div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeDeleteModal()">Cancel</button>
+                <button class="modal-btn ok" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
 
 </body>
+
 </html>
