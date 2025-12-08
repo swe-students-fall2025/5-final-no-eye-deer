@@ -22,7 +22,7 @@ The application consists of two main subsystems:
 - [Yilin Wu](https://github.com/YilinWu1028)
 - [Lily Luo](https://github.com/lilyluo7412)
 - [Mojin Yuan](https://github.com/Mojin-Yuan)
-- [Serena](https://github.com/serena0615)
+- [Serena Wang](https://github.com/serena0615)
 
 ## Docker Images
 

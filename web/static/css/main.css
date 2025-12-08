@@ -1165,3 +1165,20 @@ select.field-input {
     background: #ef5350;
 }
 
+
+@media print {
+    .navbar,
+    .diary-actions,
+    .back-btn {
+        display: none !important;
+    }
+
+    body {
+        background: #ffffff;
+    }
+
+    .diary-card {
+        page-break-inside: avoid;
+        margin-bottom: 16px;
+    }
+}

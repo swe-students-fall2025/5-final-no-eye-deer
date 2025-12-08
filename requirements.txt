@@ -1,4 +1,6 @@
 Flask>=2.3.0
 pymongo>=4.5.0
 Werkzeug>=2.3.0
+pytest
+pytest-cov
 
