@@ -187,13 +187,28 @@ jobs:
       - name: Check deployment conditions
         id: check-deploy
         run: |
-          # Check if this is a push to main/master
+          # Determine if this is a production deploy (push to main/master) or PR test deploy
+          IS_PRODUCTION=false
+          IS_PR=false
+          DEPLOY_TYPE="test"
+          CONTAINER_NAME="pet-diary-database-pr-${{ github.event.pull_request.number || 'test' }}"
+          NETWORK_NAME="pet-diary-network-pr-${{ github.event.pull_request.number || 'test' }}"
+          
           if [ "${{ github.event_name }}" == "push" ] && ([ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]); then
+            IS_PRODUCTION=true
+            DEPLOY_TYPE="production"
+            CONTAINER_NAME="pet-diary-database"
+            NETWORK_NAME="pet-diary-network"
             echo "should_deploy=true" >> $GITHUB_OUTPUT
-            echo "deploy_reason=push to main/master" >> $GITHUB_OUTPUT
+            echo "deploy_reason=push to main/master (production)" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            IS_PR=true
+            DEPLOY_TYPE="pr-test"
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+            echo "deploy_reason=PR test deployment (PR #${{ github.event.pull_request.number }})" >> $GITHUB_OUTPUT
           else
             echo "should_deploy=false" >> $GITHUB_OUTPUT
-            echo "deploy_reason=not a push to main/master (event: ${{ github.event_name }}, ref: ${{ github.ref }})" >> $GITHUB_OUTPUT
+            echo "deploy_reason=not a push to main/master or PR (event: ${{ github.event_name }}, ref: ${{ github.ref }})" >> $GITHUB_OUTPUT
           fi
           
           # Check if build-and-push succeeded
@@ -201,11 +216,21 @@ jobs:
             echo "should_deploy=false" >> $GITHUB_OUTPUT
             echo "deploy_reason=build-and-push did not succeed (result: ${{ needs.build-and-push.result }})" >> $GITHUB_OUTPUT
           fi
+          
+          # Export deployment configuration
+          echo "is_production=$IS_PRODUCTION" >> $GITHUB_OUTPUT
+          echo "is_pr=$IS_PR" >> $GITHUB_OUTPUT
+          echo "deploy_type=$DEPLOY_TYPE" >> $GITHUB_OUTPUT
+          echo "container_name=$CONTAINER_NAME" >> $GITHUB_OUTPUT
+          echo "network_name=$NETWORK_NAME" >> $GITHUB_OUTPUT
       
       - name: Deploy status message
         run: |
           if [ "${{ steps.check-deploy.outputs.should_deploy }}" == "true" ]; then
             echo "✅ Ready to deploy: ${{ steps.check-deploy.outputs.deploy_reason }}"
+            echo "   Deployment type: ${{ steps.check-deploy.outputs.deploy_type }}"
+            echo "   Container name: ${{ steps.check-deploy.outputs.container_name }}"
+            echo "   Network name: ${{ steps.check-deploy.outputs.network_name }}"
           else
             echo "ℹ️ Deploy not needed: ${{ steps.check-deploy.outputs.deploy_reason }}"
           fi
@@ -220,6 +245,14 @@ jobs:
           password: ${{ secrets.DO_PASSWORD }}
           script: |
             echo "🚀 Starting deployment to Digital Ocean..."
+            echo "   Type: ${{ steps.check-deploy.outputs.deploy_type }}"
+            echo "   Container: ${{ steps.check-deploy.outputs.container_name }}"
+            echo "   Network: ${{ steps.check-deploy.outputs.network_name }}"
+            
+            # Set deployment variables
+            CONTAINER_NAME="${{ steps.check-deploy.outputs.container_name }}"
+            NETWORK_NAME="${{ steps.check-deploy.outputs.network_name }}"
+            IS_PRODUCTION="${{ steps.check-deploy.outputs.is_production }}"
             
             # Login to Docker Hub
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
@@ -227,49 +260,96 @@ jobs:
             # Wait a moment for image to be available
             sleep 5
             
-            # Pull latest image (with retry logic)
+            # Determine which image tag to pull
+            if [ "$IS_PRODUCTION" == "true" ]; then
+              IMAGE_TAG="latest"
+            else
+              # For PRs, try to pull PR-specific tag, fallback to latest
+              PR_NUM="${{ github.event.pull_request.number }}"
+              if [ -n "$PR_NUM" ]; then
+                IMAGE_TAG="pr-$PR_NUM"
+              else
+                IMAGE_TAG="latest"
+              fi
+            fi
+            
+            # Pull image (with retry logic)
+            echo "📥 Pulling image: ${{ secrets.DOCKER_USERNAME }}/pet-diary-database:$IMAGE_TAG"
             for i in 1 2 3; do
-              if docker pull ${{ secrets.DOCKER_USERNAME }}/pet-diary-database:latest; then
+              if docker pull ${{ secrets.DOCKER_USERNAME }}/pet-diary-database:$IMAGE_TAG; then
                 echo "Successfully pulled image"
                 break
-              else
-                echo "Attempt $i failed, retrying in 10 seconds..."
+              elif [ "$i" -lt 3 ]; then
+                echo "Attempt $i failed, trying latest tag..."
+                if docker pull ${{ secrets.DOCKER_USERNAME }}/pet-diary-database:latest; then
+                  echo "Successfully pulled latest image as fallback"
+                  IMAGE_TAG="latest"
+                  break
+                fi
+                echo "Retrying in 10 seconds..."
                 sleep 10
+              else
+                echo "Failed to pull image after 3 attempts"
+                exit 1
               fi
             done
             
             # Cleanup: Stop and remove old container first
             echo "🧹 Cleaning up existing containers..."
-            docker stop pet-diary-database 2>/dev/null || true
-            docker rm -f pet-diary-database 2>/dev/null || true
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
             
-            # Cleanup: Remove any containers using port 27017
-            echo "🧹 Cleaning up containers using port 27017..."
-            CONTAINERS=$(docker ps -aq --filter "publish=27017" 2>/dev/null || true)
-            if [ -n "$CONTAINERS" ]; then
-              echo "$CONTAINERS" | xargs docker stop 2>/dev/null || true
-              echo "$CONTAINERS" | xargs docker rm -f 2>/dev/null || true
+            # For PRs, only clean up PR-specific containers (don't touch production)
+            if [ "$IS_PRODUCTION" != "true" ]; then
+              # Cleanup: Remove any containers using port 27017 (only if they match our PR pattern)
+              echo "🧹 Cleaning up PR test containers using port 27017..."
+              CONTAINERS=$(docker ps -aq --filter "publish=27017" --filter "name=pet-diary-database-pr-" 2>/dev/null || true)
+              if [ -n "$CONTAINERS" ]; then
+                echo "$CONTAINERS" | xargs docker stop 2>/dev/null || true
+                echo "$CONTAINERS" | xargs docker rm -f 2>/dev/null || true
+              fi
+            else
+              # For production, clean up any containers using port 27017
+              echo "🧹 Cleaning up containers using port 27017..."
+              CONTAINERS=$(docker ps -aq --filter "publish=27017" 2>/dev/null || true)
+              if [ -n "$CONTAINERS" ]; then
+                echo "$CONTAINERS" | xargs docker stop 2>/dev/null || true
+                echo "$CONTAINERS" | xargs docker rm -f 2>/dev/null || true
+              fi
             fi
             
             # Cleanup: Remove network if it exists (must be after container removal)
             echo "🧹 Cleaning up existing network..."
-            docker network rm pet-diary-network 2>/dev/null || true
+            docker network rm "$NETWORK_NAME" 2>/dev/null || true
             sleep 2  # Wait a moment for network cleanup
             
             # Create Docker network
-            echo "🌐 Creating Docker network..."
-            docker network create pet-diary-network
+            echo "🌐 Creating Docker network: $NETWORK_NAME"
+            docker network create "$NETWORK_NAME"
+            
+            # Determine port mapping (for PRs, use different port to avoid conflicts)
+            if [ "$IS_PRODUCTION" == "true" ]; then
+              PORT_MAPPING="27017:27017"
+            else
+              # For PRs, use a random high port to avoid conflicts
+              PR_PORT=$((27017 + (${{ github.event.pull_request.number || 999 }} % 1000)))
+              PORT_MAPPING="$PR_PORT:27017"
+              echo "   Using port $PR_PORT for PR test (to avoid conflicts)"
+            fi
             
             # Run new container
-            echo "🚀 Starting new database container..."
+            echo "🚀 Starting new database container: $CONTAINER_NAME"
             docker run -d \
-              --name pet-diary-database \
-              --network pet-diary-network \
-              -p 27017:27017 \
+              --name "$CONTAINER_NAME" \
+              --network "$NETWORK_NAME" \
+              -p "$PORT_MAPPING" \
               --restart unless-stopped \
-              -v mongodb_data:/data/db \
+              -v "mongodb_data_${CONTAINER_NAME}:/data/db" \
               -e MONGO_INITDB_DATABASE=petdiary \
-              ${{ secrets.DOCKER_USERNAME }}/pet-diary-database:latest
+              ${{ secrets.DOCKER_USERNAME }}/pet-diary-database:$IMAGE_TAG
             
             echo "✅ Database container started successfully"
+            echo "   Container: $CONTAINER_NAME"
+            echo "   Network: $NETWORK_NAME"
+            echo "   Port: $PORT_MAPPING"
 
