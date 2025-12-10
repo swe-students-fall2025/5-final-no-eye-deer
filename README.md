@@ -84,7 +84,7 @@ The application consists of two main subsystems:
 
 3. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   python3 -m pip install -r requirements.txt
    ```
 
 4. Set up MongoDB:
@@ -163,10 +163,10 @@ To run the test suite with coverage:
 
 ```bash
 # Install test dependencies
-pip install pytest pytest-cov
+python3 -m pip install pytest pytest-cov
 
 # Run tests
-pytest --cov=web/backend --cov-report=html --cov-report=term
+python3 -m pytest --cov=web/backend --cov-report=html --cov-report=term
 
 # View coverage report
 # Open htmlcov/index.html in your browser

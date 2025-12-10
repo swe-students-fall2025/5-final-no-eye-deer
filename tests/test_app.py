@@ -70,8 +70,8 @@ def test_signup_post_missing_fields(client, mock_db):
 @patch('web.backend.app.generate_password_hash')
 def test_signup_post_success(mock_hash, client, mock_db):
     """Test successful signup."""
-    # Use compatible hash method
-    mock_hash.side_effect = _compatible_generate_password_hash
+    # Use compatible hash method - return a valid hash string
+    mock_hash.return_value = _compatible_generate_password_hash('testpass123')
     mock_db['users'].find_one.return_value = None
     mock_db['users'].insert_one.return_value.inserted_id = ObjectId()
     
@@ -81,6 +81,8 @@ def test_signup_post_success(mock_hash, client, mock_db):
         'password': 'testpass123'
     })
     assert response.status_code == 302  # Redirects on success
+    # Verify generate_password_hash was called
+    mock_hash.assert_called_once()
 
 
 def test_logout(client):

@@ -5,7 +5,8 @@ FROM mongo:7.0
 WORKDIR /docker-entrypoint-initdb.d
 
 # Copy initialization script
-COPY init-mongo.js /docker-entrypoint-initdb.d/
+# Note: build context is project root, so path is relative to that
+COPY database/init-mongo.js /docker-entrypoint-initdb.d/
 
 # MongoDB will automatically run scripts in /docker-entrypoint-initdb.d/
 # when the container is first started with an empty data directory
