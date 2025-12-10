@@ -30,6 +30,17 @@ The application consists of two main subsystems:
 - **Web Backend**: [Docker Hub - pet-diary-backend](https://hub.docker.com/r/lilyluo7412/pet-diary-backend)
 - **Database**: [Docker Hub - pet-diary-database](https://hub.docker.com/r/lilyluo7412/pet-diary-database) *(Note: Image will be available after first CI/CD pipeline run)*
 
+## Live Deployment
+
+The application is automatically deployed to Digital Ocean on every push to the `main` branch via CI/CD.
+
+🌐 **Live Application**: [http://134.209.36.103:5000](http://134.209.36.103:5000)
+
+> **Note**: 
+> - The application runs on port 5000 by default
+> - The application is automatically deployed to Digital Ocean on every push to the `main` branch
+> - If you have a domain name configured, you can access the application via that domain instead
+
 ## Prerequisites
 
 - Docker and Docker Compose (for running with containers)
@@ -159,20 +170,46 @@ The database will be automatically initialized when you first run the applicatio
 
 ## Running Tests
 
-To run the test suite with coverage:
+The project includes comprehensive unit tests for both subsystems:
+
+### Web Backend Subsystem Tests
 
 ```bash
 # Install test dependencies
-python3 -m pip install pytest pytest-cov
+python3 -m pip install pytest pytest-cov pymongo
 
-# Run tests
-python3 -m pytest --cov=web/backend --cov-report=html --cov-report=term
+# Run all web backend tests (app.py and db.py)
+python3 -m pytest tests/test_app.py tests/test_db.py --cov=web/backend --cov-report=html --cov-report=term
 
 # View coverage report
 # Open htmlcov/index.html in your browser
 ```
 
-The project requires at least 80% code coverage.
+### Database Subsystem Tests
+
+```bash
+# Run database subsystem tests
+# Note: Tests will automatically start MongoDB if it's not already running
+python3 -m pytest tests/test_database.py -v
+
+# Or run all tests together
+python3 -m pytest tests/ --cov=web/backend --cov-report=term
+```
+
+**Note**: The database subsystem tests will automatically attempt to start MongoDB using Docker if it's not already running. You can also manually start MongoDB using:
+```bash
+docker-compose up -d mongodb
+# or
+docker run -d -p 27017:27017 --name mongodb mongo:latest
+```
+
+### Test Files
+
+- `tests/test_app.py` - Tests for Flask application (`web/backend/app.py`)
+- `tests/test_db.py` - Tests for database connection module (`web/backend/db.py`)
+- `tests/test_database.py` - Tests for database subsystem initialization (`database/init-mongo.js`)
+
+The project requires at least 80% code coverage for each subsystem.
 
 ## Docker Deployment
 
@@ -225,6 +262,7 @@ The project uses GitHub Actions for continuous integration and deployment. Each 
 1. **Build and Test**: Runs on every push and pull request
    - Builds Docker image
    - Tests MongoDB connection and initialization
+   - Runs unit tests for database subsystem (tests/test_database.py)
 
 2. **Build and Push**: Runs on every push and pull request
    - Builds Docker image

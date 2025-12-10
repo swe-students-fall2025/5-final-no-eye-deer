@@ -47,7 +47,8 @@ jobs:
           # Start MongoDB service for testing
           docker run -d -p 27017:27017 --name mongodb-test mongo:latest || true
           sleep 10
-          pytest --cov=web/backend --cov-report=xml --cov-report=term
+          # Run all tests including db.py tests
+          pytest tests/test_app.py tests/test_db.py --cov=web/backend --cov-report=xml --cov-report=term
       
       - name: Check coverage threshold
         run: |
