@@ -8,13 +8,7 @@ from unittest.mock import patch, MagicMock
 from bson.objectid import ObjectId
 from datetime import datetime
 import web.backend.app as backend_app
-from werkzeug.security import generate_password_hash, check_password_hash
-
-# Patch generate_password_hash to use pbkdf2:sha256 for compatibility
-# (scrypt may not be available in all Python environments)
-def _compatible_generate_password_hash(password, method='pbkdf2:sha256', salt_length=16):
-    """Compatible password hash generator that uses pbkdf2:sha256."""
-    return generate_password_hash(password, method=method, salt_length=salt_length)
+from werkzeug.security import generate_password_hash
 
 
 # Set test environment variables before importing app
@@ -67,11 +61,8 @@ def test_signup_post_missing_fields(client, mock_db):
     assert response.status_code == 302  # Redirects on error
 
 
-@patch('web.backend.app.generate_password_hash')
-def test_signup_post_success(mock_hash, client, mock_db):
+def test_signup_post_success(client, mock_db):
     """Test successful signup."""
-    # Use compatible hash method - return a valid hash string
-    mock_hash.return_value = _compatible_generate_password_hash('testpass123')
     mock_db['users'].find_one.return_value = None
     mock_db['users'].insert_one.return_value.inserted_id = ObjectId()
     
@@ -81,8 +72,6 @@ def test_signup_post_success(mock_hash, client, mock_db):
         'password': 'testpass123'
     })
     assert response.status_code == 302  # Redirects on success
-    # Verify generate_password_hash was called
-    mock_hash.assert_called_once()
 
 
 def test_logout(client):
@@ -164,13 +153,11 @@ def test_login_invalid_credentials(client, mock_db):
     assert '/' in resp.headers['Location']
 
 
-@patch('web.backend.app.check_password_hash')
-def test_login_success_with_email(mock_check, client, mock_db):
+def test_login_success_with_email(client, mock_db):
     """Successful login via email."""
     user_id = ObjectId()
     password = 'secret123'
-    # Use pbkdf2:sha256 method for better compatibility (scrypt may not be available)
-    password_hash = _compatible_generate_password_hash(password)
+    password_hash = generate_password_hash(password)
     user_doc = {
         '_id': user_id,
         'email': 'user@example.com',
@@ -178,8 +165,6 @@ def test_login_success_with_email(mock_check, client, mock_db):
         'password_hash': password_hash,
     }
     mock_db['users'].find_one.side_effect = [user_doc, None]
-    # Mock check_password_hash to return True for correct password
-    mock_check.return_value = True
 
     resp = client.post('/login', data={
         'email': 'user@example.com',
