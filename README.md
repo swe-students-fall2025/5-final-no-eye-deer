@@ -39,7 +39,8 @@ The application is automatically deployed to Digital Ocean on every push to the 
 > **Note**: 
 > - The application runs on port 5000 by default
 > - The application is automatically deployed to Digital Ocean on every push to the `main` branch
-> - If you have a domain name configured, you can access the application via that domain instead
+> - If you encounter any issues accessing the live deployment, please use the local setup instructions below
+> - For local development and testing, we recommend using Docker Compose (see Quick Start section)
 
 ## Prerequisites
 
