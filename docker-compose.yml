@@ -2,7 +2,10 @@ version: '3.8'
 
 services:
   mongodb:
-    image: mongo:latest
+    build:
+      context: .
+      dockerfile: database/Dockerfile
+    image: pet-diary-database:latest
     container_name: pet-diary-mongodb
     ports:
       - "27017:27017"
