@@ -209,13 +209,14 @@ The project uses GitHub Actions for continuous integration and deployment. Each 
    - Builds Docker image
    - Verifies coverage threshold (80%)
 
-2. **Build and Push**: Runs on pushes to main/master
+2. **Build and Push**: Runs on every push and pull request
    - Builds Docker image
-   - Pushes to Docker Hub
+   - Pushes to Docker Hub (with PR-specific tags for pull requests)
 
-3. **Deploy**: Runs on pushes to main/master
-   - Deploys to Digital Ocean
-   - Pulls latest image
+3. **Deploy**: Runs on every push and pull request
+   - **For Pull Requests**: Tests deployment using isolated resources (PR-specific container and network names) to catch deployment errors before merging
+   - **For Production (main/master)**: Deploys to Digital Ocean production environment
+   - Pulls latest image (or PR-specific tag)
    - Connects to database container via Docker network
    - Restarts the application
 
@@ -225,17 +226,20 @@ The project uses GitHub Actions for continuous integration and deployment. Each 
    - Builds Docker image
    - Tests MongoDB connection and initialization
 
-2. **Build and Push**: Runs on pushes to main/master
+2. **Build and Push**: Runs on every push and pull request
    - Builds Docker image
-   - Pushes to Docker Hub
+   - Pushes to Docker Hub (with PR-specific tags for pull requests)
 
-3. **Deploy**: Runs on pushes to main/master
-   - Deploys to Digital Ocean
-   - Pulls latest image
+3. **Deploy**: Runs on every push and pull request
+   - **For Pull Requests**: Tests deployment using isolated resources (PR-specific container and network names) to catch deployment errors before merging
+   - **For Production (main/master)**: Deploys to Digital Ocean production environment
+   - Pulls latest image (or PR-specific tag)
    - Creates Docker network for container communication
    - Starts database container
 
-**Note**: The database container should be deployed before the web backend container to ensure proper connectivity.
+**Notes**:
+- The database container should be deployed before the web backend container to ensure proper connectivity.
+- PR deployments use isolated resources (e.g., `pet-diary-database-pr-{number}`) to avoid conflicts with production, allowing safe testing of deployment scripts before merging.
 
 ## Project Structure
 
