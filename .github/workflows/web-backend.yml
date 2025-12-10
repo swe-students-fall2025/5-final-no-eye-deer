@@ -99,49 +99,51 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
-      - name: Extract metadata (when secrets available)
-        id: meta-extract
-        if: steps.check-secrets.outputs.secrets_available == 'true'
+      - name: Prepare image tags
+        id: meta
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.DOCKER_USERNAME }}/pet-diary-backend
-          tags: |
-            type=ref,event=branch
-            type=sha
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
-            type=raw,value=pr-${{ github.event.pull_request.number }},enable=${{ github.event_name == 'pull_request' }}
-      
-      - name: Set default tags (when secrets not available)
-        id: meta-default
-        if: steps.check-secrets.outputs.secrets_available != 'true'
         run: |
-          # Use a local-only tag when secrets are not available
-          echo "tags=pet-diary-backend:test-build" >> $GITHUB_OUTPUT
-          echo "labels=" >> $GITHUB_OUTPUT
-      
-      - name: Set unified metadata
-        id: meta
-        run: |
-          if [ "${{ steps.check-secrets.outputs.secrets_available }}" == "true" ]; then
-            echo "tags=${{ steps.meta-extract.outputs.tags }}" >> $GITHUB_OUTPUT
-            echo "labels=${{ steps.meta-extract.outputs.labels }}" >> $GITHUB_OUTPUT
-          else
-            echo "tags=${{ steps.meta-default.outputs.tags }}" >> $GITHUB_OUTPUT
-            echo "labels=${{ steps.meta-default.outputs.labels }}" >> $GITHUB_OUTPUT
+          # Short commit sha
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
+          
+          # Default: local-only tag (safe for PRs)
+          FINAL_TAGS="pet-diary-backend:test-build"
+          FINAL_LABELS=""
+          
+          # If secrets_available set to true by earlier step, use DOCKER_USERNAME if valid
+          if [ "${{ steps.check-secrets.outputs.secrets_available }}" = "true" ]; then
+            OWNER="$DOCKER_USERNAME"
+            if [ -n "${OWNER}" ] && [ "${OWNER}" != "***" ]; then
+              FINAL_TAGS="${OWNER}/pet-diary-backend:sha-${SHORT_SHA}"
+              
+              # Add latest tag for main/master
+              if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.ref }}" = "refs/heads/master" ]; then
+                FINAL_TAGS="${FINAL_TAGS},${OWNER}/pet-diary-backend:latest"
+              fi
+              
+              # Add PR tag if this is a PR
+              if [ "${{ github.event_name }}" = "pull_request" ] && [ -n "${{ github.event.pull_request.number }}" ]; then
+                FINAL_TAGS="${FINAL_TAGS},${OWNER}/pet-diary-backend:pr-${{ github.event.pull_request.number }}"
+              fi
+            else
+              # Fallback to safe local-only tag
+              FINAL_TAGS="pet-diary-backend:test-build"
+            fi
           fi
-      
-      - name: Debug tags
-        run: echo "tags=${{ steps.meta.outputs.tags }}"
+          
+          echo "tags=${FINAL_TAGS}" >> $GITHUB_OUTPUT
+          echo "labels=${FINAL_LABELS}" >> $GITHUB_OUTPUT
+          echo "Computed tags: ${FINAL_TAGS}"
       
       - name: Set cache-from value
         id: cache-from
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         run: |
-          if [ "${{ steps.check-secrets.outputs.secrets_available }}" == "true" ] && [ -n "$DOCKER_USERNAME" ] && [ "$DOCKER_USERNAME" != "***" ]; then
-            echo "value=type=registry,ref=$DOCKER_USERNAME/pet-diary-backend:latest" >> $GITHUB_OUTPUT
+          OWNER="$DOCKER_USERNAME"
+          if [ "${{ steps.check-secrets.outputs.secrets_available }}" = "true" ] && [ -n "${OWNER}" ] && [ "${OWNER}" != "***" ]; then
+            echo "value=type=registry,ref=${OWNER}/pet-diary-backend:latest" >> $GITHUB_OUTPUT
           else
             echo "value=" >> $GITHUB_OUTPUT
           fi
