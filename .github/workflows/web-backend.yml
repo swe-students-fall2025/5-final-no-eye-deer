@@ -79,12 +79,17 @@ jobs:
       
       - name: Check if secrets are available (for PRs)
         id: check-secrets
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
-          if [ -z "${{ secrets.DOCKER_USERNAME }}" ] || [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
+          # Check if secrets are available and not masked
+          if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ] || [ "$DOCKER_USERNAME" = "***" ] || [ "$DOCKER_PASSWORD" = "***" ]; then
             echo "secrets_available=false" >> $GITHUB_OUTPUT
             echo "Warning: Docker Hub secrets not available. This is normal for PRs from forks."
           else
             echo "secrets_available=true" >> $GITHUB_OUTPUT
+            echo "DOCKER_USERNAME=$DOCKER_USERNAME" >> $GITHUB_ENV
           fi
       
       - name: Login to Docker Hub
@@ -97,9 +102,11 @@ jobs:
       - name: Extract metadata (when secrets available)
         id: meta-extract
         if: steps.check-secrets.outputs.secrets_available == 'true'
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/pet-diary-backend
+          images: ${{ env.DOCKER_USERNAME }}/pet-diary-backend
           tags: |
             type=ref,event=branch
             type=sha
@@ -110,7 +117,8 @@ jobs:
         id: meta-default
         if: steps.check-secrets.outputs.secrets_available != 'true'
         run: |
-          echo "tags=test-build" >> $GITHUB_OUTPUT
+          # Use a local-only tag when secrets are not available
+          echo "tags=pet-diary-backend:test-build" >> $GITHUB_OUTPUT
           echo "labels=" >> $GITHUB_OUTPUT
       
       - name: Set unified metadata
@@ -129,9 +137,11 @@ jobs:
       
       - name: Set cache-from value
         id: cache-from
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         run: |
-          if [ "${{ steps.check-secrets.outputs.secrets_available }}" == "true" ]; then
-            echo "value=type=registry,ref=${{ secrets.DOCKER_USERNAME }}/pet-diary-backend:latest" >> $GITHUB_OUTPUT
+          if [ "${{ steps.check-secrets.outputs.secrets_available }}" == "true" ] && [ -n "$DOCKER_USERNAME" ] && [ "$DOCKER_USERNAME" != "***" ]; then
+            echo "value=type=registry,ref=$DOCKER_USERNAME/pet-diary-backend:latest" >> $GITHUB_OUTPUT
           else
             echo "value=" >> $GITHUB_OUTPUT
           fi
