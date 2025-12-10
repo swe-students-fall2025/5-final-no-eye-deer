@@ -1,4 +1,4 @@
-name: Web Backend CI/CD
+name: Database CI/CD
 
 on:
   push:
@@ -16,17 +16,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
-      
       - name: Clean up existing containers
         run: |
           # Stop and remove any existing containers using port 27017
@@ -36,63 +25,45 @@ jobs:
             echo "$CONTAINERS" | xargs docker rm || true
           fi
           # Clean up test containers by name
-          docker stop mongodb-test test-container 2>/dev/null || true
-          docker rm mongodb-test test-container 2>/dev/null || true
-      
-      - name: Run tests with coverage
-        env:
-          MONGODB_URI: mongodb://localhost:27017/petdiary_test
-          SECRET_KEY: test-secret-key
-        run: |
-          # Start MongoDB service for testing
-          docker run -d -p 27017:27017 --name mongodb-test mongo:latest || true
-          sleep 10
-          pytest --cov=web/backend --cov-report=xml --cov-report=term
-      
-      - name: Check coverage threshold
-        run: |
-          coverage report --fail-under=80
+          docker stop test-database 2>/dev/null || true
+          docker rm test-database 2>/dev/null || true
+          # Clean up containers by ancestor
+          CONTAINERS=$(docker ps -aq --filter "ancestor=database:latest" 2>/dev/null || true)
+          if [ -n "$CONTAINERS" ]; then
+            echo "$CONTAINERS" | xargs docker stop || true
+            echo "$CONTAINERS" | xargs docker rm || true
+          fi
       
       - name: Build Docker image
         run: |
-          docker build -t web-backend:latest -f web/Dockerfile .
-      
-      - name: Clean up test containers before Docker test
-        run: |
-          docker stop test-container 2>/dev/null || true
-          docker rm test-container 2>/dev/null || true
-          docker network rm test-network 2>/dev/null || true
+          docker build -t database:latest -f database/Dockerfile .
       
       - name: Test Docker image
         run: |
-          # Create a network for testing
-          docker network create test-network || true
-          # Connect MongoDB to the network
-          docker network connect test-network mongodb-test || true
-          # Run the web backend container
-          docker run -d --name test-container --network test-network -p 5000:5000 \
-            -e MONGODB_URI=mongodb://mongodb-test:27017/petdiary \
-            -e SECRET_KEY=test-key \
-            web-backend:latest
-          sleep 10
-          docker logs test-container
+          # Run the database container
+          docker run -d --name test-database -p 27017:27017 database:latest
+          sleep 15  # Wait for MongoDB to initialize
+          
+          # Test connection
+          docker exec test-database mongosh --eval "db.adminCommand('ping')" || exit 1
+          
+          # Verify database and collections were created
+          docker exec test-database mongosh petdiary --eval "db.getCollectionNames()" || exit 1
+          
           # Cleanup
-          docker stop test-container || true
-          docker rm test-container || true
-          docker network disconnect test-network mongodb-test || true
-          docker network rm test-network || true
+          docker stop test-database || true
+          docker rm test-database || true
       
       - name: Cleanup containers
         if: always()
         run: |
-          docker stop mongodb-test test-container 2>/dev/null || true
-          docker rm mongodb-test test-container 2>/dev/null || true
+          docker stop test-database 2>/dev/null || true
+          docker rm test-database 2>/dev/null || true
           CONTAINERS=$(docker ps -aq --filter "publish=27017" 2>/dev/null || true)
           if [ -n "$CONTAINERS" ]; then
             echo "$CONTAINERS" | xargs docker stop || true
             echo "$CONTAINERS" | xargs docker rm || true
           fi
-          docker network rm test-network 2>/dev/null || true
 
   build-and-push:
     needs: build-and-test
@@ -138,27 +109,27 @@ jobs:
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
           
           # Default: local-only tag (safe for PRs)
-          FINAL_TAGS="pet-diary-backend:test-build"
+          FINAL_TAGS="pet-diary-database:test-build"
           FINAL_LABELS=""
           
           # If secrets_available set to true by earlier step, use DOCKER_USERNAME if valid
           if [ "${{ steps.check-secrets.outputs.secrets_available }}" = "true" ]; then
             OWNER="$DOCKER_USERNAME"
             if [ -n "${OWNER}" ] && [ "${OWNER}" != "***" ]; then
-              FINAL_TAGS="${OWNER}/pet-diary-backend:sha-${SHORT_SHA}"
+              FINAL_TAGS="${OWNER}/pet-diary-database:sha-${SHORT_SHA}"
               
               # Add latest tag for main/master
               if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.ref }}" = "refs/heads/master" ]; then
-                FINAL_TAGS="${FINAL_TAGS},${OWNER}/pet-diary-backend:latest"
+                FINAL_TAGS="${FINAL_TAGS},${OWNER}/pet-diary-database:latest"
               fi
               
               # Add PR tag if this is a PR
               if [ "${{ github.event_name }}" = "pull_request" ] && [ -n "${{ github.event.pull_request.number }}" ]; then
-                FINAL_TAGS="${FINAL_TAGS},${OWNER}/pet-diary-backend:pr-${{ github.event.pull_request.number }}"
+                FINAL_TAGS="${FINAL_TAGS},${OWNER}/pet-diary-database:pr-${{ github.event.pull_request.number }}"
               fi
             else
               # Fallback to safe local-only tag
-              FINAL_TAGS="pet-diary-backend:test-build"
+              FINAL_TAGS="pet-diary-database:test-build"
             fi
           fi
           
@@ -173,7 +144,7 @@ jobs:
         run: |
           OWNER="$DOCKER_USERNAME"
           if [ "${{ steps.check-secrets.outputs.secrets_available }}" = "true" ] && [ -n "${OWNER}" ] && [ "${OWNER}" != "***" ]; then
-            echo "value=type=registry,ref=${OWNER}/pet-diary-backend:latest" >> $GITHUB_OUTPUT
+            echo "value=type=registry,ref=${OWNER}/pet-diary-database:latest" >> $GITHUB_OUTPUT
           else
             echo "value=" >> $GITHUB_OUTPUT
           fi
@@ -182,7 +153,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./web/Dockerfile
+          file: ./database/Dockerfile
           push: ${{ steps.check-secrets.outputs.secrets_available == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels || '' }}
@@ -220,16 +191,14 @@ jobs:
           IS_PRODUCTION=false
           IS_PR=false
           DEPLOY_TYPE="test"
-          CONTAINER_NAME="pet-diary-backend-pr-${{ github.event.pull_request.number || 'test' }}"
+          CONTAINER_NAME="pet-diary-database-pr-${{ github.event.pull_request.number || 'test' }}"
           NETWORK_NAME="pet-diary-network-pr-${{ github.event.pull_request.number || 'test' }}"
-          DB_CONTAINER_NAME="pet-diary-database-pr-${{ github.event.pull_request.number || 'test' }}"
           
           if [ "${{ github.event_name }}" == "push" ] && ([ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]); then
             IS_PRODUCTION=true
             DEPLOY_TYPE="production"
-            CONTAINER_NAME="pet-diary-backend"
+            CONTAINER_NAME="pet-diary-database"
             NETWORK_NAME="pet-diary-network"
-            DB_CONTAINER_NAME="pet-diary-database"
             echo "should_deploy=true" >> $GITHUB_OUTPUT
             echo "deploy_reason=push to main/master (production)" >> $GITHUB_OUTPUT
           elif [ "${{ github.event_name }}" == "pull_request" ]; then
@@ -254,7 +223,6 @@ jobs:
           echo "deploy_type=$DEPLOY_TYPE" >> $GITHUB_OUTPUT
           echo "container_name=$CONTAINER_NAME" >> $GITHUB_OUTPUT
           echo "network_name=$NETWORK_NAME" >> $GITHUB_OUTPUT
-          echo "db_container_name=$DB_CONTAINER_NAME" >> $GITHUB_OUTPUT
       
       - name: Deploy status message
         run: |
@@ -263,7 +231,6 @@ jobs:
             echo "   Deployment type: ${{ steps.check-deploy.outputs.deploy_type }}"
             echo "   Container name: ${{ steps.check-deploy.outputs.container_name }}"
             echo "   Network name: ${{ steps.check-deploy.outputs.network_name }}"
-            echo "   DB container: ${{ steps.check-deploy.outputs.db_container_name }}"
           else
             echo "ℹ️ Deploy not needed: ${{ steps.check-deploy.outputs.deploy_reason }}"
           fi
@@ -274,9 +241,6 @@ jobs:
         with:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USERNAME }}
-          # Authentication: Use password (DO_SSH_KEY is optional, leave empty if using password)
-          # If using password: Set DO_PASSWORD secret, leave DO_SSH_KEY empty
-          # If using SSH key: Set DO_SSH_KEY secret, leave DO_PASSWORD empty
           key: ${{ secrets.DO_SSH_KEY }}
           password: ${{ secrets.DO_PASSWORD }}
           script: |
@@ -284,12 +248,10 @@ jobs:
             echo "   Type: ${{ steps.check-deploy.outputs.deploy_type }}"
             echo "   Container: ${{ steps.check-deploy.outputs.container_name }}"
             echo "   Network: ${{ steps.check-deploy.outputs.network_name }}"
-            echo "   DB Container: ${{ steps.check-deploy.outputs.db_container_name }}"
             
             # Set deployment variables
             CONTAINER_NAME="${{ steps.check-deploy.outputs.container_name }}"
             NETWORK_NAME="${{ steps.check-deploy.outputs.network_name }}"
-            DB_CONTAINER_NAME="${{ steps.check-deploy.outputs.db_container_name }}"
             IS_PRODUCTION="${{ steps.check-deploy.outputs.is_production }}"
             
             # Login to Docker Hub
@@ -312,14 +274,14 @@ jobs:
             fi
             
             # Pull image (with retry logic)
-            echo "📥 Pulling image: ${{ secrets.DOCKER_USERNAME }}/pet-diary-backend:$IMAGE_TAG"
+            echo "📥 Pulling image: ${{ secrets.DOCKER_USERNAME }}/pet-diary-database:$IMAGE_TAG"
             for i in 1 2 3; do
-              if docker pull ${{ secrets.DOCKER_USERNAME }}/pet-diary-backend:$IMAGE_TAG; then
+              if docker pull ${{ secrets.DOCKER_USERNAME }}/pet-diary-database:$IMAGE_TAG; then
                 echo "Successfully pulled image"
                 break
               elif [ "$i" -lt 3 ]; then
                 echo "Attempt $i failed, trying latest tag..."
-                if docker pull ${{ secrets.DOCKER_USERNAME }}/pet-diary-backend:latest; then
+                if docker pull ${{ secrets.DOCKER_USERNAME }}/pet-diary-database:latest; then
                   echo "Successfully pulled latest image as fallback"
                   IMAGE_TAG="latest"
                   break
@@ -332,12 +294,6 @@ jobs:
               fi
             done
             
-            # Verify image exists
-            if ! docker images | grep -q "${{ secrets.DOCKER_USERNAME }}/pet-diary-backend.*$IMAGE_TAG"; then
-              echo "Error: Image not found after pull attempts"
-              exit 1
-            fi
-            
             # Cleanup: Stop and remove old container first
             echo "🧹 Cleaning up existing containers..."
             docker stop "$CONTAINER_NAME" 2>/dev/null || true
@@ -345,64 +301,55 @@ jobs:
             
             # For PRs, only clean up PR-specific containers (don't touch production)
             if [ "$IS_PRODUCTION" != "true" ]; then
-              # Cleanup: Remove any containers using port 5000 (only if they match our PR pattern)
-              echo "🧹 Cleaning up PR test containers using port 5000..."
-              CONTAINERS=$(docker ps -aq --filter "publish=5000" --filter "name=pet-diary-backend-pr-" 2>/dev/null || true)
+              # Cleanup: Remove any containers using port 27017 (only if they match our PR pattern)
+              echo "🧹 Cleaning up PR test containers using port 27017..."
+              CONTAINERS=$(docker ps -aq --filter "publish=27017" --filter "name=pet-diary-database-pr-" 2>/dev/null || true)
               if [ -n "$CONTAINERS" ]; then
                 echo "$CONTAINERS" | xargs docker stop 2>/dev/null || true
                 echo "$CONTAINERS" | xargs docker rm -f 2>/dev/null || true
               fi
             else
-              # For production, clean up any containers using port 5000
-              echo "🧹 Cleaning up containers using port 5000..."
-              CONTAINERS=$(docker ps -aq --filter "publish=5000" 2>/dev/null || true)
+              # For production, clean up any containers using port 27017
+              echo "🧹 Cleaning up containers using port 27017..."
+              CONTAINERS=$(docker ps -aq --filter "publish=27017" 2>/dev/null || true)
               if [ -n "$CONTAINERS" ]; then
                 echo "$CONTAINERS" | xargs docker stop 2>/dev/null || true
                 echo "$CONTAINERS" | xargs docker rm -f 2>/dev/null || true
               fi
             fi
             
-            # Create Docker network if it doesn't exist (for connecting to database container)
-            echo "🌐 Ensuring Docker network exists: $NETWORK_NAME"
-            docker network create "$NETWORK_NAME" 2>/dev/null || echo "Network already exists, continuing..."
+            # Cleanup: Remove network if it exists (must be after container removal)
+            echo "🧹 Cleaning up existing network..."
+            docker network rm "$NETWORK_NAME" 2>/dev/null || true
+            sleep 2  # Wait a moment for network cleanup
             
-            # Ensure database container is running and connected to network
-            # (Database container should be deployed by database.yml workflow first)
-            echo "🔗 Connecting to database container: $DB_CONTAINER_NAME"
-            docker network connect "$NETWORK_NAME" "$DB_CONTAINER_NAME" 2>/dev/null || echo "Database container may not be on network yet (will connect on startup)"
-            
-            # Determine MongoDB URI
-            # If DO_MONGODB_URI is set, use it; otherwise connect to database container
-            if [ -z "${{ secrets.DO_MONGODB_URI }}" ]; then
-              MONGODB_URI="mongodb://$DB_CONTAINER_NAME:27017/petdiary"
-            else
-              MONGODB_URI="${{ secrets.DO_MONGODB_URI }}"
-            fi
+            # Create Docker network
+            echo "🌐 Creating Docker network: $NETWORK_NAME"
+            docker network create "$NETWORK_NAME"
             
             # Determine port mapping (for PRs, use different port to avoid conflicts)
             if [ "$IS_PRODUCTION" == "true" ]; then
-              PORT_MAPPING="5000:5000"
+              PORT_MAPPING="27017:27017"
             else
               # For PRs, use a random high port to avoid conflicts
-              PR_PORT=$((5000 + (${{ github.event.pull_request.number || 999 }} % 1000)))
-              PORT_MAPPING="$PR_PORT:5000"
+              PR_PORT=$((27017 + (${{ github.event.pull_request.number || 999 }} % 1000)))
+              PORT_MAPPING="$PR_PORT:27017"
               echo "   Using port $PR_PORT for PR test (to avoid conflicts)"
             fi
             
             # Run new container
-            echo "🚀 Starting new backend container: $CONTAINER_NAME"
+            echo "🚀 Starting new database container: $CONTAINER_NAME"
             docker run -d \
               --name "$CONTAINER_NAME" \
               --network "$NETWORK_NAME" \
               -p "$PORT_MAPPING" \
               --restart unless-stopped \
-              -e MONGODB_URI="$MONGODB_URI" \
-              -e SECRET_KEY="${{ secrets.DO_SECRET_KEY }}" \
-              ${{ secrets.DOCKER_USERNAME }}/pet-diary-backend:$IMAGE_TAG
+              -v "mongodb_data_${CONTAINER_NAME}:/data/db" \
+              -e MONGO_INITDB_DATABASE=petdiary \
+              ${{ secrets.DOCKER_USERNAME }}/pet-diary-database:$IMAGE_TAG
             
-            echo "✅ Backend container started successfully"
+            echo "✅ Database container started successfully"
             echo "   Container: $CONTAINER_NAME"
             echo "   Network: $NETWORK_NAME"
             echo "   Port: $PORT_MAPPING"
-            echo "   MongoDB URI: $MONGODB_URI"
 
