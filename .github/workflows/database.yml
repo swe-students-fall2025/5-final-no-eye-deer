@@ -18,7 +18,7 @@ jobs:
       
       - name: Build Docker image
         run: |
-          docker build -t database:latest -f database/Dockerfile database/
+          docker build -t database:latest -f database/Dockerfile .
       
       - name: Test Docker image
         run: |
@@ -123,7 +123,7 @@ jobs:
       - name: Build Docker image (always)
         uses: docker/build-push-action@v5
         with:
-          context: database
+          context: .
           file: ./database/Dockerfile
           push: ${{ steps.check-secrets.outputs.secrets_available == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
