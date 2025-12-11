@@ -296,8 +296,10 @@ jobs:
             # Login to Docker Hub
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             
-            # Wait a moment for image to be available
-            sleep 5
+            # Wait briefly for image to propagate across Docker Hub CDN
+            # Image replication can take a few seconds in certain regions or under high load
+            echo "⏳ Waiting for image to be available on Docker Hub CDN..."
+            sleep 3  # Reduced from 5s, but keeps safeguard against timing issues
             
             # Determine which image tag to pull
             if [ "$IS_PRODUCTION" == "true" ]; then
@@ -325,8 +327,8 @@ jobs:
                   IMAGE_TAG="latest"
                   break
                 fi
-                echo "Retrying in 10 seconds..."
-                sleep 10
+                echo "Retrying in 5 seconds..."
+                sleep 5  # Reduced from 10 seconds, but keeps reasonable retry delay
               else
                 echo "Failed to pull image after 3 attempts"
                 exit 1
@@ -371,6 +373,38 @@ jobs:
             # (Database container should be deployed by database.yml workflow first)
             echo "🔗 Connecting to database container: $DB_CONTAINER_NAME"
             docker network connect "$NETWORK_NAME" "$DB_CONTAINER_NAME" 2>/dev/null || echo "Database container may not be on network yet (will connect on startup)"
+            
+            # Wait for database container to be ready (optimized for mongo:7.0)
+            echo "⏳ Waiting for database container to be ready..."
+            MAX_RETRIES=20  # Reduced from 30 (mongo:7.0 is faster than 8.2)
+            RETRY_COUNT=0
+            DB_READY=false
+            
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              # Check if container is running
+              if docker ps | grep -q "$DB_CONTAINER_NAME"; then
+                # Try to ping MongoDB (works with both mongo:7.0 and mongo:8.2)
+                if docker exec "$DB_CONTAINER_NAME" mongosh --quiet --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
+                  echo "✅ Database container is ready!"
+                  DB_READY=true
+                  break
+                fi
+              fi
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "   Attempt $RETRY_COUNT/$MAX_RETRIES: Database not ready yet, waiting 1 second..."
+                sleep 1  # Reduced from 2 seconds
+              fi
+            done
+            
+            if [ "$DB_READY" != "true" ]; then
+              echo "❌ Error: Database container did not become ready after $MAX_RETRIES attempts"
+              echo "   Container status:"
+              docker ps -a | grep "$DB_CONTAINER_NAME" || echo "   Container not found"
+              echo "   Database logs:"
+              docker logs "$DB_CONTAINER_NAME" --tail 50 || echo "   Could not retrieve logs"
+              exit 1
+            fi
             
             # Determine MongoDB URI
             # If DO_MONGODB_URI is set, use it; otherwise connect to database container

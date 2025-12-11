@@ -272,8 +272,10 @@ jobs:
             # Login to Docker Hub
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             
-            # Wait a moment for image to be available
-            sleep 5
+            # Wait briefly for image to propagate across Docker Hub CDN
+            # Image replication can take a few seconds in certain regions or under high load
+            echo "⏳ Waiting for image to be available on Docker Hub CDN..."
+            sleep 3  # Reduced from 5s, but keeps safeguard against timing issues
             
             # Determine which image tag to pull
             if [ "$IS_PRODUCTION" == "true" ]; then
@@ -301,8 +303,8 @@ jobs:
                   IMAGE_TAG="latest"
                   break
                 fi
-                echo "Retrying in 10 seconds..."
-                sleep 10
+                echo "Retrying in 5 seconds..."
+                sleep 5  # Reduced from 10 seconds, but keeps reasonable retry delay
               else
                 echo "Failed to pull image after 3 attempts"
                 exit 1
@@ -336,7 +338,7 @@ jobs:
             # Cleanup: Remove network if it exists (must be after container removal)
             echo "🧹 Cleaning up existing network..."
             docker network rm "$NETWORK_NAME" 2>/dev/null || true
-            sleep 2  # Wait a moment for network cleanup
+            # No sleep needed - network removal is fast
             
             # Create Docker network
             echo "🌐 Creating Docker network: $NETWORK_NAME"

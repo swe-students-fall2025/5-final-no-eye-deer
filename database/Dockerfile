@@ -1,5 +1,5 @@
 # Custom MongoDB Dockerfile for Pet Diary Database Subsystem
-FROM mongo:8.2
+FROM mongo:7.0
 
 # Set working directory
 WORKDIR /docker-entrypoint-initdb.d
